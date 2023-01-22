@@ -1,3 +1,0 @@
-import tika
-
-tika.initVM()

@@ -1,53 +1,39 @@
-import os
 import pathlib
-import tika
+import magic
 
 from tika import parser
 from .filters import *
 
-from lingua import Language, LanguageDetectorBuilder
-
-LANGUAGES = [Language.ENGLISH, Language.FRENCH, Language.GERMAN, Language.SPANISH, Language.CZECH, Language.SLOVAK]
+from lingua import LanguageDetectorBuilder
 
 
 class File:
+    lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
     plaintext: str
 
     def __init__(self, path):
-        self.path = path
         self.path_obj = pathlib.PurePath(path)
+        self.path = self.path_obj.__str__()
         self.filename = self.path_obj.stem
         self.extension = self.path_obj.suffix[1:]
+        self.filetype = magic.from_file(path)
         self.processed = False
         self.plaintext = ""
         self.lang = None
 
-    def extract_plaintext(self, do_filter=True):
+    def process_file(self, do_filter=True):
         try:
+
             data = parser.from_file(self.path)
             raw = data["content"]
 
             if do_filter:
-                match self.extension:
-                    case "pdf":
-                        raw = filter_pdf(raw)
-
-                    case "doc" | "docx":
-                        raw = filter_doc(raw)
-
-                    case "pptx":
-                        raw = filter_pptx(raw)
+                raw = generic_filter(raw)
 
             self.plaintext = raw
-
+            self.lang = self.lang_detetctor.detect_language_of(raw)
+            self.processed = True
 
 
         except Exception as e:
             print(f"problem extracting text from file {self.path}:", e)
-
-    def detect_language(self):
-        if self.plaintext is "":
-            return
-
-        detector = LanguageDetectorBuilder.from_languages(*LANGUAGES).build()
-        self.lang = detector.detect_language_of(self.plaintext)
