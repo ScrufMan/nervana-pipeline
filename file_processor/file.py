@@ -1,37 +1,40 @@
 import pathlib
-import magic
-
-from tika import parser
-from .filters import *
 
 from lingua import LanguageDetectorBuilder
+from tika import parser
 
+from .filters import filter_plaintext
+from .filetype import get_filetype
+
+FILTER = True
 
 class File:
     lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
-    plaintext: str
 
     def __init__(self, path):
         self.path_obj = pathlib.PurePath(path)
         self.path = self.path_obj.__str__()
-        self.filename = self.path_obj.stem
-        self.extension = self.path_obj.suffix[1:]
-        self.filetype = magic.from_file(path)
-        self.processed = False
+        self.filename = self.path_obj.name
+        self.type = get_filetype(path)
         self.plaintext = ""
         self.lang = None
+        self.processed = False
 
-    def process_file(self, do_filter=True):
+    def process_file(self):
         try:
 
             data = parser.from_file(self.path)
-            raw = data["content"]
 
-            if do_filter:
-                raw = generic_filter(raw)
+            if data["status"] != 200:
+                print(f"Error extracting plaintext from file {self.filename}")
+                return
 
-            self.plaintext = raw
-            self.lang = self.lang_detetctor.detect_language_of(raw)
+            self.plaintext = data["content"]
+
+            if FILTER:
+                filter_plaintext(self)
+
+            self.lang = self.lang_detetctor.detect_language_of(self.plaintext)
             self.processed = True
 
 

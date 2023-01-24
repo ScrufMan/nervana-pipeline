@@ -1,1 +1,1 @@
-from .generic import generic_filter
+from .filter_plaintext import filter_plaintext
