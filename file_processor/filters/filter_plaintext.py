@@ -3,6 +3,8 @@ from .pdf import filter_pdf
 from .doc import filter_doc
 from .pptx import filter_pptx
 
+from typing import TYPE_CHECKING
+
 
 def filter_plaintext(file):
     filtered_text = generic_filter(file.plaintext)

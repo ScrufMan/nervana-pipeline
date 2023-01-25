@@ -1,0 +1,9 @@
+UTF-8 (8-bitový Unicode Transformation Format) je bezstratové kódovanie s variabilnou dĺžkou určené pre Unicode znaky, ktoré vytvorili Rob Pike a Ken Thompson. Používa skupiny bajtov na reprezentovanie Unicode štandardu pre abecedy mnohých svetových jazykov. UTF-8 kódovanie je špeciálne užitočné pre prenos cez 8-bitové systémy elektronickej pošty.
+
+Používa 1 až 4 bajty na zapísanie znaku podľa toho, o ktorý Unicode symbol ide. Napríklad, len jeden UTF-8 bajt je potrebný na zakódovanie všetkých 128 US-ASCII znakov z Unicode rozsahu U+0000 až U+007F.
+
+Aj keď sa môže zdať neefektívne reprezentovať Unicode znaky až štyrmi bajtmi, UTF-8 umožňuje starým systémom prenášať túto ASCII nadmnožinu. Dodatočne, dátová kompresia môže byť stále vykonaná nezávisle od použitia UTF-8.
+
+Zatiaľ čo pri UTF-16 by boli európske a množstvo iných, napríklad najbežnejších čínskych znakov, zakódované 16-mi bitmi (ostatné 32-mi bitmi), pri UTF-8 je prvých 128 znakov (tieto sú pre všetky krajiny rovnaké) zakódovaných 8-mimi bitmi a zvyšné sú zakódované 16-timi až 32-mi bitmi. Preto UTF-8 je výhodné pre krajiny, kde väčšina znakov textu tvorí prvých 128 znakov, keďže uložený text tak zaberá menej miesta ako pri UTF-16.
+
+IETF požaduje od všetkých internetových protokolov, aby UTF-8 bolo aspoň jediné podporované kódovanie.

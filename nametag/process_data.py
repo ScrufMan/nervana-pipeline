@@ -48,11 +48,15 @@ def parse_data(data):
     names.extend(find_uncontainerized_names(soup))
     emails = find_entity(soup, "me")
     phones = find_entity(soup, "at")
+    companies = find_entity(soup, "if")
+    links = find_entity(soup, "mi")
 
     output = f"""
     names: {names}
     emails: {emails}
     phones: {phones}
+    companies: {companies}
+    links: {links}
     """
 
     print(output)
@@ -62,5 +66,8 @@ sentence = "Václav Havel byl první prezident České republiky. A Milan Rastis
            "example@example.cz a +420944168220 z mesta 98401 Lučenec Slovensko, ulica Partizánska 7 a včera hrala. " \
            "O 19:00 tam bude i Vojtech tu je jeho mail vojtech@seznam.cz cislo je 0944168220 aj Peter Novák. Býva na ulici Partizánska 8, 98401 Lučenec."
 
-tokenized_data = recognize_data(sentence)
+
+sentence2 = """Vysoke uceni technicke"""
+
+tokenized_data = recognize_data(sentence2)
 parse_data(tokenized_data)
