@@ -11,6 +11,6 @@ def find_phone_numbers(data, phones):
 
             phones.append(match)
 
-def find_bitcoin_adresses(data):
+def find_btc_adresses(data):
     matches = re.findall("[13][a-km-zA-HJ-NP-Z1-9]{25,34}", data)
     return matches
