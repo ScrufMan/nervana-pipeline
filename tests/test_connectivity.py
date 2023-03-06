@@ -1,5 +1,5 @@
 import unittest
-from api.db import Db
+from backend.db import Db
 
 class TestConnection(unittest.TestCase):
     def test_db(self):

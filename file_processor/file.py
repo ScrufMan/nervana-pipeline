@@ -1,42 +1,56 @@
 import pathlib
+from datetime import datetime
 
 from lingua import LanguageDetectorBuilder
 from tika import parser
 
 from .filters import filter_plaintext
-from .filetype import get_filetype
+from .metadata import get_file_format
 
 FILTER = True
+lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
+
 
 class File:
-    lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
 
     def __init__(self, path):
         self.path_obj = pathlib.PurePath(path)
         self.path = self.path_obj.__str__()
         self.filename = self.path_obj.name
-        self.type = get_filetype(path)
+        self.format = get_file_format(path)
         self.plaintext = ""
         self.lang = None
-        self.processed = False
+        self.timestamp = None
 
     def process_file(self):
         try:
+            tika_response = parser.from_file(self.path)
 
-            data = parser.from_file(self.path)
-
-            if data["status"] != 200:
+            if tika_response["status"] != 200:
                 print(f"Error extracting plaintext from file {self.filename}")
-                return
+                return False
 
-            self.plaintext = data["content"]
+            self.plaintext = tika_response["content"]
+            self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
+            self.lang = lang_detetctor.detect_language_of(self.plaintext)
 
             if FILTER:
                 filter_plaintext(self)
 
-            self.lang = self.lang_detetctor.detect_language_of(self.plaintext)
-            self.processed = True
-
+            return True
 
         except Exception as e:
             print(f"problem extracting text from file {self.path}:", e)
+            return False
+
+    def make_document(self):
+        document = {
+            "type": "file",
+            "filename": self.filename,
+            "path": self.path,
+            "format": self.format,
+            "language": self.lang.name.lower(),
+            "timestamp": self.timestamp
+        }
+
+        return document

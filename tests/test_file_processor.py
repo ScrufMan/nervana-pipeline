@@ -265,7 +265,7 @@ Annual Review
 Asi najznámejšia “grafovka”
 Server ale aj desktopový klient
 Jazyk cypher
-HTTP api
+HTTP backend
 
 
 
@@ -350,7 +350,7 @@ k emailu sa viaže heslo/hash
 Asi najznámejšia “grafovka”
 Server ale aj desktopový klient
 Jazyk cypher
-HTTP api
+HTTP backend
 Vypísať heslá pre daný email
 Pridať k hashu plaintext
 Vypísať hashe pre daný email

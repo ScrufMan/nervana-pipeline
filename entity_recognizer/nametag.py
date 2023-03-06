@@ -1,9 +1,11 @@
 from bs4 import BeautifulSoup
 import requests
+import re
 
 from .entity import Entity
 
 BASE_URL = "https://lindat.mff.cuni.cz/services/nametag/api"
+CONTEXT_LENGTH = 80
 
 NAMETAG_TO_UNIVERSAL = {
     "P": "person",
@@ -13,29 +15,59 @@ NAMETAG_TO_UNIVERSAL = {
     "p_": "person",
     "pm": "person",
     "ps": "person",
-    "A": "adress",
-    "ah": "adress",
-    "az": "adress",
-    "gs": "adress",
-    "gu": "city",
-    "gc": "state",
+    "T": "datetime",
+    "A": "location",
+    "ah": "location",
+    "az": "location",
+    "gs": "location",
+    "gu": "location",
+    "gq": "location",
+    "gc": "location",
     "at": "phone",
     "me": "email",
     "mi": "link",
-    "if": "company",
-    "io": "government"
+    "if": "organization",
+    "io": "organization",
+    "or": "document",
+    "op": "product"
 }
 
 
 def tokenize_data(data):
     url = f"{BASE_URL}/recognize"
+    data = re.sub(r'\n', ' ', data)
+    data = re.sub(r' {2,}', ' ', data)
     params = {'data': data}
     response = requests.get(url, params=params)
     if response.status_code == 200:
         return response.json()['result']
 
 
-def get_entities(tokenized_data):
+def get_context(value, parent):
+    start_idx = parent.find(value)
+    end_idx = start_idx + len(value) - 1
+
+    parent_end_idx = len(parent) - 1
+    one_direction_len = (CONTEXT_LENGTH - len(value)) // 2
+
+    if one_direction_len <=0:
+        return value
+
+    start_idx -= one_direction_len
+    end_idx += one_direction_len
+
+    if start_idx < 0:
+        end_idx += -start_idx
+        start_idx = 0
+
+    if end_idx > parent_end_idx:
+        offset = end_idx - parent_end_idx
+        start_idx = max(0, start_idx - offset)
+
+    return parent[start_idx:end_idx + 1]
+
+
+def get_entities(tokenized_data, file_id):
     entities = []
 
     soup = BeautifulSoup(tokenized_data, "html.parser")
@@ -50,26 +82,21 @@ def get_entities(tokenized_data):
 
         universal_type = NAMETAG_TO_UNIVERSAL.get(nametag_type, "unknown")
 
-        entity_tokens = tokenized_entity.find_all("token")
-        entity_parts = list(map(lambda tag: tag.text, entity_tokens))
-        entity_value = " ".join(entity_parts)
+        if universal_type == "unknown":
+            continue
 
-        entity = Entity(universal_type, entity_value, " ", 25)
+        entity_value = tokenized_entity.text
+
+        context = get_context(entity_value, tokenized_entity.parent.text)
+
+        entity = Entity(universal_type, entity_value, context, file_id)
         entities.append(entity)
 
     return entities
 
-def run_nametag(data):
+
+def run_nametag(data, file_id):
     tokenized = tokenize_data(data)
-    entities = get_entities(tokenized)
+    found_entities = get_entities(tokenized, file_id)
 
-    return entities
-
-if __name__ == '__main__':
-    sentence = "Václav Havel byl první prezident České republiky. A Milan Rastislav Štefánik generál armády. mail je " \
-               "example@example.cz a + 420 944 168 220 z mesta 98401 Lučenec Slovensko, ulica Partizánska 7 a včera hrala. " \
-               "O 19:00 tam bude i Vojtech tu je jeho mail vojtech@seznam.cz cislo je 0944168220 aj Peter Novák. Býva na ulici Partizánska 8, 98401 Lučenec. " \
-               "3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5"
-
-    tokenized_sentences = tokenize_data(sentence)
-    get_entities(tokenized_sentences)
+    return found_entities

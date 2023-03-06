@@ -4,7 +4,7 @@ from typing import List
 from .file import File
 
 
-def get_files(root_dir: str) -> List[File]:
+def get_files(root_dir):
     """
     Finds all files from given root directory
     :param root_dir: relative or absolute path
@@ -20,8 +20,7 @@ def get_files(root_dir: str) -> List[File]:
 
     for root, subdirs, files in os.walk(root_dir):
         for file in files:
-            path = fr"{wd}/{root}/{file}"  # create absolute path
-            file_obj = File(path)
-            all_files.append(file_obj)
+            path = os.path.join(wd, root, file)  # create absolute path
+            all_files.append(path)
 
     return all_files

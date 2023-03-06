@@ -10,11 +10,11 @@ class Entity:
 
     def make_document(self):
         document = {
+            "type": "entity",
             "entity_type": self.entity_type,
             "value": self.value,
             "context": self.context,
-            "file_id": self.file_id,
-            "timestamp": datetime.now()
+            "file_id": self.file_id
         }
 
         return document
