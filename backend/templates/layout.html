@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Datové sady</title>
+    <!-- Připojení CSS stylů -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    {#<script>#}
+    {#	function addSearchCondition() {#}
+    {#		var inputGroup = document.createElement("div");#}
+    {#		inputGroup.classList.add("input-group", "mt-2");#}
+    {##}
+    {#		var prependDiv = document.createElement("div");#}
+    {#		prependDiv.classList.add("input-group-prepend");#}
+    {##}
+    {#		var button = document.createElement("button");#}
+    {#		button.classList.add("btn", "btn-outline-secondary");#}
+    {#		button.type = "button";#}
+    {#		button.onclick = function() { inputGroup.remove(); };#}
+    {#		button.innerHTML = "–";#}
+    {##}
+    {#		var input = document.createElement("input");#}
+    {#		input.type = "text";#}
+    {#		input.classList.add("form-control");#}
+    {#		input.placeholder = "Přidat další podmínku vyhledávání";#}
+    {##}
+    {#		var appendDiv = document.createElement("div");#}
+    {#		appendDiv.classList.add("input-group-append");#}
+    {##}
+    {#		var select = document.createElement("select");#}
+    {#		select.classList.add("custom-select");#}
+    {#		select.id = "additional-condition-type";#}
+    {#		var option = document.createElement("option");#}
+    {#		option.selected = true;#}
+    {#		option.innerHTML = "Všechny";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Telefonní číslo";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Emailová adresa";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Datum";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Souřadnice";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Číslo účtu";#}
+    {#		select.appendChild(option);#}
+    {#		option = document.createElement("option");#}
+    {#		option.innerHTML = "Jazyk";#}
+    {#		select.appendChild(option);#}
+    {##}
+    {#		prependDiv.appendChild(button);#}
+    {#		appendDiv.appendChild(select);#}
+    {#		inputGroup.appendChild(prependDiv);#}
+    {#		inputGroup.appendChild(input);#}
+    {#		inputGroup.appendChild(appendDiv);#}
+    {##}
+    {#		var additionalSearchConditions = document.getElementById("additional-search-conditions");#}
+    {#		additionalSearchConditions.appendChild(inputGroup);#}
+    {#	}#}
+    {#</script>#}
+</head>
+<body>
+<!-- Hlavička stránky -->
+<header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{{ url_for("home") }}">Hledání v datových sadách</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="{{ url_for("home") }}">Vyhledávač</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">E-mail</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Geolokace</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Banky a účty</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+<!-- Hlavní obsah stránky -->
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+<!-- Pata stránky -->
+<footer class="bg-light text-center py-3">
+    <p>&copy; Aplikace pro prohledávání datových sad</p>
+</footer>
+<!-- Připojení JS skriptů -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>
