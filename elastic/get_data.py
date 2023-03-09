@@ -54,6 +54,16 @@ def get_all_files(es, dataset):
     return response['hits']['hits']
 
 
+def get_file(es, dataset, file_id):
+    index = dataset
+
+    try:
+        res = es.get(index=index, id=file_id)
+        return res["_source"]
+    except Exception as e:
+        print(f"Error retrieving document: {e}")
+
+
 def aggregate_by_field(field, index, client: Elasticsearch):
     agg = {
         "by_field": {

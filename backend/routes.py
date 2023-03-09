@@ -1,14 +1,14 @@
 from flask import render_template, request
-from elastic import get_all_datasets, find_entities, get_all_files, get_most_popular_by_type
+from elastic import get_all_datasets, find_entities, get_all_files, get_most_popular_by_type, get_file
 
 from backend import app, es
 from backend.forms import SearchForm
 from backend.models import entities_from_hits
+from tika import parser
 
 PAGE_SIZE = 10
 
 
-@app.route("/", methods=["GET", "POST"])
 @app.route("/search", methods=["GET", "POST"])
 def search():
     form = SearchForm()
@@ -31,6 +31,22 @@ def search():
 
     return render_template("home.html", form=form, datasets=datasets, found_entites=found_entities,
                            total_hits=total_hits, page=page, page_size=PAGE_SIZE)
+
+
+@app.route("/file/<string:dataset>/<string:file_id>")
+def show_file(dataset, file_id):
+    file = get_file(es, dataset, file_id)
+    path = file["path"]
+
+    tika_response = parser.from_file(path)
+
+    if tika_response["status"] != 200:
+        return f"Error extracting plaintext from file {path}"
+
+    plaintext = tika_response["content"]
+    plaintext = plaintext.strip()
+
+    return render_template("file.html", path=path, plaintext=plaintext)
 
 
 @app.route("/stats")

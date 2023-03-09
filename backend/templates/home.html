@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
     <div class="row">
-        <div class="col-md-3 mt-4">
+        <div class="col-md-2 mt-4">
             <!-- Levé menu -->
             <ul class="list-group">
                 <li class="list-group-item active">Všechny datové sady</li>
@@ -13,7 +13,7 @@
         </div>
         <div class="col-md-9">
             <!-- Formulář pro vyhledávání -->
-            <form method="POST" action="/" id="search-form">
+            <form method="POST" action="" id="search-form">
                 {{ form.hidden_tag() }}
                 <div class="form-row">
                     <div class="form-group col-md-6">
@@ -75,7 +75,8 @@
                                 <small class="text-muted">{{ entity.dataset }}</small>
                             </div>
                             <div class="col-md-3 d-flex align-items-center justify-content-center">
-                                <a href="file:///{{ entity.file_path }}" target="_blank"
+                                <a href="{{ url_for("show_file", dataset=entity.dataset, file_id=entity.file_id) }}"
+                                   target="_blank"
                                    class="btn btn-secondary"
                                    style="color:white;">Náhled</a>
                             </div>
@@ -88,33 +89,31 @@
             {% if total_hits > 0 %}
                 <!-- Další výsledky vyhledávání -->
                 <!-- Lišta pro listování výsledků -->
-                <nav class="mt-3" aria-label="Page navigation example">
-                    <div class="row">
-                        <div class="col-md-9">
-                            <ul class="pagination d-flex justify-content-around">
-                                {% if page > 1 %}
-                                    <li class="page-item mr-3">
-                                        <button type="submit" form="search-form"
-                                                formaction="{{ url_for('search', page=page-1, page_size=page_size) }}"
-                                                class="page-link">Prev
-                                        </button>
-                                    </li>
-                                {% endif %}
+                <div class="col-md-9">
+                    <nav class="mt-3" aria-label="Page navigation example">
+                        <ul class="pagination d-flex justify-content-around">
+                            {% if page > 1 %}
+                                <li class="page-item mr-3">
+                                    <button type="submit" form="search-form"
+                                            formaction="{{ url_for('search', page=page-1, page_size=page_size) }}"
+                                            class="page-link">Prev
+                                    </button>
+                                </li>
+                            {% endif %}
 
-                                {% if total_hits > page * page_size %}
-                                    <li class="page-item ml-3">
-                                        {% set next_page = page + 1 %}
-                                        <button type="submit" form="search-form"
-                                                formaction="{{ url_for('search', page=next_page, page_size=page_size) }}"
-                                                class="page-link">Next
-                                        </button>
-                                    </li>
-                                {% endif %}
+                            {% if total_hits > page * page_size %}
+                                <li class="page-item ml-3">
+                                    {% set next_page = page + 1 %}
+                                    <button type="submit" form="search-form"
+                                            formaction="{{ url_for('search', page=next_page, page_size=page_size) }}"
+                                            class="page-link">Next
+                                    </button>
+                                </li>
+                            {% endif %}
 
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
+                        </ul>
+                    </nav>
+                </div>
             {% endif %}
         </div>
     </div>
