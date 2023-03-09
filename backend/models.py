@@ -7,9 +7,9 @@ class FoundEntity:
 
 
 def tag_term_in_context(context, search_term):
-    return context.replace(search_term, f'<span class="danger">{search_term}</span>')
+    return context.replace(search_term, f'<span class="text-danger font-weight-bold">{search_term}</span>')
 
-def entities_from_hits(entity_hits, file_hits, search_term):
+def entities_from_hits(entity_hits, file_hits):
     entities = []
 
     files = []
@@ -24,8 +24,7 @@ def entities_from_hits(entity_hits, file_hits, search_term):
             filename = "Soubor nenalezen v Elasticsearch"
             file_path = ""
 
-        # context = tag_term_in_context(entity_hit["_source"]["context"], search_term)
-        context = entity_hit["_source"]["context"]
+        context = tag_term_in_context(entity_hit["_source"]["context"], entity_hit["_source"]["value"])
 
         entity = FoundEntity(filename, context, entity_hit["_index"], file_path)
         entities.append(entity)

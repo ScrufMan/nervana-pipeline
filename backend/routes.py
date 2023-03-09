@@ -27,7 +27,7 @@ def search():
         total_hits, hits = find_entities(es, search_term, dataset, entity_type, start_index, PAGE_SIZE)
 
         file_hits = get_all_files(es, dataset)
-        found_entities = entities_from_hits(hits, file_hits, search_term)
+        found_entities = entities_from_hits(hits, file_hits)
 
     return render_template("home.html", form=form, datasets=datasets, found_entites=found_entities,
                            total_hits=total_hits, page=page, page_size=PAGE_SIZE)
