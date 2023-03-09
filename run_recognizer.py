@@ -6,7 +6,7 @@ from entity_recognizer.recognition_manager import find_entities_in_plaintext
 from elastic import get_elastic_client, test_connection, create_index_if_not_exists, index_file, index_entities
 from concurrent.futures import ProcessPoolExecutor
 
-DATASET = "zachyt1"
+DATASET = "zachyt_1"
 
 
 def process_one_file(file_path):
@@ -32,9 +32,13 @@ def main():
 
     ncpu = os.cpu_count()
 
-    with ProcessPoolExecutor(max_workers=ncpu) as executor:
-        for file_path in executor.map(process_one_file, files):
-            print(f"File {file_path} done!")
+    # with ProcessPoolExecutor(max_workers=ncpu) as executor:
+    #     for file_path in executor.map(process_one_file, files):
+    #         print(f"File {file_path} done!")
+
+    for file_path in files:
+        process_one_file(file_path)
+        print(file_path)
 
 
 if __name__ == '__main__':

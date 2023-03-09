@@ -17,7 +17,7 @@ def find_phone_numbers(data, phones):
 
 def find_btc_adresses(plaintext, file_id):
     btc_adresses = []
-    matches = re.findall(r"([13]|bc1)[A-HJ-NP-Za-km-z1-9]{27,34}", plaintext)
+    matches = re.findall(r"[13][a-km-zA-HJ-NP-Z1-9]{25,34}", plaintext)
     for match in matches:
         context = get_context(match, plaintext)
         entity = Entity("btc_adress", match, context, file_id)
@@ -25,10 +25,10 @@ def find_btc_adresses(plaintext, file_id):
     return btc_adresses
 
 
-def find_ibans(plaintext, file_id):
+def find_bank_accounts(plaintext, file_id):
     ibans = []
     matches = re.findall(
-        r'[a-zA-Z]{2}[0-9]{2}\s?[a-zA-Z0-9]{4}\s?[0-9]{4}\s?[0-9]{3}([a-zA-Z0-9]\s?[a-zA-Z0-9]{0,4}\s?[a-zA-Z0-9]{0,4}\s?[a-zA-Z0-9]{0,4}\s?[a-zA-Z0-9]{0,3})?',
+        r'\b[A-Z]{2}\s*\d{2}\s*(?:\d\s*){4,20}\b',
         plaintext)
     for match in matches:
         context = get_context(match, plaintext)

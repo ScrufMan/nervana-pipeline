@@ -19,7 +19,7 @@ def get_all_datasets(es: Elasticsearch):
     return datasets
 
 
-def find_entities(es: Elasticsearch, term, dataset, entity_type):
+def find_entities(es: Elasticsearch, term, dataset, entity_type, start_index, page_size):
     query = {
         "bool": {
             "must": [
@@ -38,8 +38,8 @@ def find_entities(es: Elasticsearch, term, dataset, entity_type):
     if index == "Všechny":
         index = "_all"
 
-    response = es.search(index=index, query=query)
-    return response['hits']['hits']
+    response = es.search(index=index, query=query, from_=start_index, size=page_size)
+    return response["hits"]["total"]["value"], response['hits']['hits']
 
 
 def get_all_files(es, dataset):
@@ -52,6 +52,7 @@ def get_all_files(es, dataset):
     }
     response = es.search(index=index, query=query)
     return response['hits']['hits']
+
 
 def aggregate_by_field(field, index, client: Elasticsearch):
     agg = {
