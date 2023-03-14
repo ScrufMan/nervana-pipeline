@@ -5,32 +5,39 @@ from backend import app, es
 from backend.forms import SearchForm
 from backend.models import entities_from_hits
 from tika import parser
+from flask_paginate import Pagination, get_page_parameter
 
 PAGE_SIZE = 10
 
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
-    form = SearchForm()
+    form = SearchForm(request.args)
     datasets = get_all_datasets(es)
-    found_entities = []
-
+    results = []
     total_hits = 0
-    page = request.args.get('page', 1, type=int)
-    start_index = (page - 1) * PAGE_SIZE
 
-    if form.validate_on_submit():
+    page = request.args.get("page", 1, type=int)
+
+    if form.validate():
         search_term = form.search_term.data
         dataset = form.dataset.data
         entity_type = form.entity_type.data
 
-        total_hits, hits = find_entities(es, search_term, dataset, entity_type, start_index, PAGE_SIZE)
+        total_hits, hits = find_entities(es, search_term, dataset, entity_type, page, PAGE_SIZE)
 
         file_hits = get_all_files(es, dataset)
-        found_entities = entities_from_hits(hits, file_hits)
+        results = entities_from_hits(hits, file_hits)
 
-    return render_template("home.html", form=form, datasets=datasets, found_entites=found_entities,
-                           total_hits=total_hits, page=page, page_size=PAGE_SIZE)
+    pagination = Pagination(
+        page=page,
+        total=total_hits,
+        per_page=PAGE_SIZE,
+        css_framework='bootstrap4'
+    )
+
+    return render_template("home.html", form=form, datasets=datasets, results=results, total_hits=total_hits,
+                           pagination=pagination)
 
 
 @app.route("/file/<string:dataset>/<string:file_id>")

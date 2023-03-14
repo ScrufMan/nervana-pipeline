@@ -19,7 +19,7 @@ def get_all_datasets(es: Elasticsearch):
     return datasets
 
 
-def find_entities(es: Elasticsearch, term, dataset, entity_type, start_index, page_size):
+def find_entities(es: Elasticsearch, term, dataset, entity_type, page, page_size):
     query = {
         "bool": {
             "must": [
@@ -37,6 +37,8 @@ def find_entities(es: Elasticsearch, term, dataset, entity_type, start_index, pa
     index = dataset
     if index == "Všechny":
         index = "_all"
+
+    start_index = (page - 1) * 10
 
     response = es.search(index=index, query=query, from_=start_index, size=page_size)
     return response["hits"]["total"]["value"], response['hits']['hits']
