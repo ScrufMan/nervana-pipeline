@@ -1,7 +1,7 @@
 import pathlib
 from datetime import datetime
 
-# from lingua import LanguageDetectorBuilder
+from lingua import LanguageDetectorBuilder
 from tika import parser
 
 from .filters import filter_plaintext
