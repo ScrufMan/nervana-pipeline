@@ -6,66 +6,8 @@
     <!-- Připojení CSS stylů -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
-    {#<script>#}
-    {#	function addSearchCondition() {#}
-    {#		var inputGroup = document.createElement("div");#}
-    {#		inputGroup.classList.add("input-group", "mt-2");#}
-    {##}
-    {#		var prependDiv = document.createElement("div");#}
-    {#		prependDiv.classList.add("input-group-prepend");#}
-    {##}
-    {#		var button = document.createElement("button");#}
-    {#		button.classList.add("btn", "btn-outline-secondary");#}
-    {#		button.type = "button";#}
-    {#		button.onclick = function() { inputGroup.remove(); };#}
-    {#		button.innerHTML = "–";#}
-    {##}
-    {#		var input = document.createElement("input");#}
-    {#		input.type = "text";#}
-    {#		input.classList.add("form-control");#}
-    {#		input.placeholder = "Přidat další podmínku vyhledávání";#}
-    {##}
-    {#		var appendDiv = document.createElement("div");#}
-    {#		appendDiv.classList.add("input-group-append");#}
-    {##}
-    {#		var select = document.createElement("select");#}
-    {#		select.classList.add("custom-select");#}
-    {#		select.id = "additional-condition-type";#}
-    {#		var option = document.createElement("option");#}
-    {#		option.selected = true;#}
-    {#		option.innerHTML = "Všechny";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Telefonní číslo";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Emailová adresa";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Datum";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Souřadnice";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Číslo účtu";#}
-    {#		select.appendChild(option);#}
-    {#		option = document.createElement("option");#}
-    {#		option.innerHTML = "Jazyk";#}
-    {#		select.appendChild(option);#}
-    {##}
-    {#		prependDiv.appendChild(button);#}
-    {#		appendDiv.appendChild(select);#}
-    {#		inputGroup.appendChild(prependDiv);#}
-    {#		inputGroup.appendChild(input);#}
-    {#		inputGroup.appendChild(appendDiv);#}
-    {##}
-    {#		var additionalSearchConditions = document.getElementById("additional-search-conditions");#}
-    {#		additionalSearchConditions.appendChild(inputGroup);#}
-    {#	}#}
-    {#</script>#}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
 <!-- Hlavička stránky -->
 <header>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -97,13 +39,13 @@
     {% block content %}{% endblock %}
 </main>
 <!-- Pata stránky -->
-<footer class="bg-light text-center py-3">
+<footer class="bg-light text-center py-3 mt-auto">
     <p>&copy; Aplikace pro prohledávání datových sad</p>
 </footer>
 <!-- Připojení JS skriptů -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-
+<script src="../static/script.js"></script>
 </body>
 </html>

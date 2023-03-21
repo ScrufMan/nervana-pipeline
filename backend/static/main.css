@@ -1,3 +1,7 @@
+body {
+    min-height: 100vh;
+}
+
 /* Tmavý režim */
 body.dark-mode {
     background-color: #333;
@@ -83,8 +87,8 @@ form .form-control {
 }
 
 /* Lišta pro listování výsledků */
-nav .pagination {
-    margin-top: 20px;
+.pagination {
+    justify-content: center;
 }
 
 nav .page-link {

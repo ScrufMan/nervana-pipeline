@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-md-2 mt-4">
+            <!-- Levé menu -->
+            <ul class="list-group">
+                <li class="list-group-item active">Všechny datové sady</li>
+                {% for dataset in datasets %}
+                    <li class="list-group-item list-group-item-action list-group-item-light">{{ dataset }}</li>
+                {% endfor %}
+
+            </ul>
+        </div>
+        <div class="col-md-9">
+            <!-- Formulář pro vyhledávání -->
+            <form method="post" action="" id="search-form">
+                {{ form.hidden_tag() }}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.search_term.label() }}
+                        {{ form.search_term(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.dataset.label() }}
+                        {{ form.dataset(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.entity_type.label() }}
+                        {{ form.entity_type(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <button class="btn btn-outline-secondary mr-2" type="button"
+                                onclick="addSearchCondition()">+
+                        </button>
+                        <label>Přidat další podmínku vyhledávání</label>
+                    </div>
+                </div>
+                <div class="form-row" id="additional-search-conditions">
+                    <div class="form-group col-md-12">
+                    </div>
+                </div>
+                {{ form.submit(class="btn btn-primary btn-lg mx-auto mb-3 d-block") }}
+            </form>
+
+            <div class="results">
+
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}
