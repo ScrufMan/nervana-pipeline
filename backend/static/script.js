@@ -14,13 +14,13 @@ $(document).ready(function () {
         const formData = $('#search-form').serialize();
         const pageUrl = $(this).attr('href');
         loadResults(formData, pageUrl);
-        // get the element you want to scroll to
+        // element to scroll to
         const target = $('.results');
 
         // scroll to the element
         $('html, body').animate({
             scrollTop: target.offset().top
-        }, 200); // 1000 is the duration of the animation in milliseconds
+        }, 200);
     });
 });
 
@@ -38,7 +38,10 @@ function loadResults(formData, url) {
     });
 }
 
+let nextFieldIdx = 1;
+
 function addSearchCondition() {
+
     const inputGroup = document.createElement("div");
     inputGroup.classList.add("input-group", "col-md-12", "mb-3");
 
@@ -48,44 +51,24 @@ function addSearchCondition() {
     const button = document.createElement("button");
     button.classList.add("btn", "btn-outline-secondary");
     button.type = "button";
-    button.onclick = function () {
+    button.onclick = button.onclick = () => {
         inputGroup.remove();
+        nextFieldIdx--;
     };
     button.innerHTML = "–";
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.classList.add("form-control");
-    input.placeholder = "Přidat další podmínku vyhledávání";
+    const defaultInput = document.getElementById("search_terms-0");
+    const input = defaultInput.cloneNode(true);
+    input.removeAttribute("id");
+    input.name = `search_terms-${nextFieldIdx}`; // indexing from 0
 
     const appendDiv = document.createElement("div");
     appendDiv.classList.add("input-group-append");
 
-    const select = document.createElement("select");
-    select.classList.add("custom-select");
-    select.id = "additional-condition-type";
-    let option = document.createElement("option");
-    option.selected = true;
-    option.innerHTML = "Všechny";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Telefonní číslo";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Emailová adresa";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Datum";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Souřadnice";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Číslo účtu";
-    select.appendChild(option);
-    option = document.createElement("option");
-    option.innerHTML = "Jazyk";
-    select.appendChild(option);
+    const defaultSelect = document.getElementById("entity_types-0");
+    const select = defaultSelect.cloneNode(true);
+    select.removeAttribute("id");
+    select.name = `entity_types-${nextFieldIdx}`;
 
     prependDiv.appendChild(button);
     appendDiv.appendChild(select);
@@ -95,4 +78,6 @@ function addSearchCondition() {
 
     const additionalSearchConditions = document.getElementById("additional-search-conditions");
     additionalSearchConditions.appendChild(inputGroup);
+
+    nextFieldIdx++;
 }

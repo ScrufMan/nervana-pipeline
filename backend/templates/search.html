@@ -8,16 +8,20 @@
                 {{ form.hidden_tag() }}
                 <div class="form-row">
                     <div class="form-group col-md-6">
-                        {{ form.search_term.label() }}
-                        {{ form.search_term(class="form-control") }}
+                        {% for search_term in form.search_terms %}
+                            {{ search_term.label() }}
+                            {{ search_term(class="form-control") }}
+                        {% endfor %}
                     </div>
                     <div class="form-group col-md-3">
                         {{ form.dataset.label() }}
                         {{ form.dataset(class="form-control") }}
                     </div>
                     <div class="form-group col-md-3">
-                        {{ form.entity_type.label() }}
-                        {{ form.entity_type(class="form-control") }}
+                        {% for entity_type in form.entity_types %}
+                            {{ entity_type.label() }}
+                            {{ entity_type(class="form-control") }}
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="form-row" id="additional-search-conditions">

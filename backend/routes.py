@@ -15,32 +15,35 @@ def search():
     form = SearchForm(request.form)
     datasets = get_all_datasets(es)
 
-    if request.method == "POST":
-        page = request.args.get("page", 1, type=int)
+    if request.method == "GET":
+        return render_template("search.html", form=form, datasets=datasets)
 
-        if form.validate():
-            search_term = form.search_term.data
-            dataset = form.dataset.data
-            entity_type = form.entity_type.data
+    page = request.args.get("page", 1, type=int)
 
-            total_hits, hits = find_entities(es, search_term, dataset, entity_type, page, PAGE_SIZE)
+    if form.validate():
+        dataset = form.dataset.data
+        search_terms = form.search_terms.data
+        entity_types = form.entity_types.data
 
-            file_hits = get_all_files(es, dataset)
-            results = entities_from_hits(hits, file_hits)
+        search_conditions = zip(search_terms, entity_types)
 
-            pagination = Pagination(
-                page=page,
-                total=total_hits,
-                per_page=PAGE_SIZE,
-                css_framework='bootstrap4',
-                link_attr={'class': 'my-link-class'}
-            )
+        total_hits, hits = find_entities(es, dataset, search_conditions, page, PAGE_SIZE)
 
-            results_html = render_template('search-results.html', results=results, pagination=pagination, total_hits=total_hits)
+        file_hits = get_all_files(es, dataset)
+        results = entities_from_hits(hits, file_hits)
 
-            return {'results': results_html}
+        pagination = Pagination(
+            page=page,
+            total=total_hits,
+            per_page=PAGE_SIZE,
+            css_framework='bootstrap4',
+            link_attr={'class': 'my-link-class'}
+        )
 
-    return render_template("search.html", form=form, datasets=datasets)
+        results_html = render_template('search-results.html', results=results, pagination=pagination,
+                                       total_hits=total_hits)
+
+        return {'results': results_html}
 
 
 @app.route("/file/<string:dataset>/<string:file_id>")

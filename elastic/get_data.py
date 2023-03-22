@@ -1,17 +1,5 @@
 from elasticsearch import Elasticsearch
 
-SEARCH_TO_UNIVERSAL = {
-    "Osoba": "person",
-    "Datum": "datetime",
-    "Lokace": "location",
-    "Číslo účtu": "bank_account",
-    "BTC adresa": "btc_adress",
-    "Telefonní číslo": "phone",
-    "Emailová adresa": "email",
-    "Internetový odkaz": "link",
-    "Organizace": "organization"
-}
-
 
 def get_all_datasets(es: Elasticsearch):
     indices = es.indices.get_alias().keys()
@@ -19,20 +7,31 @@ def get_all_datasets(es: Elasticsearch):
     return datasets
 
 
-def find_entities(es: Elasticsearch, term, dataset, entity_type, page, page_size):
-    query = {
+def find_entities(es: Elasticsearch, dataset, search_conditions, page, page_size):
+    search_query = {
         "bool": {
             "must": [
                 {"match": {"type": "entity"}}
-            ]
+            ],
+            "should": []
         }
     }
 
-    if term != "*":
-        query["bool"]["must"].append({"match": {"value": term}})
+    for search_term, entity_type in search_conditions:
+        match_query = {
+            "bool": {
+                "must": []
+            }
+        }
 
-    if entity_type != "Všechny":
-        query["bool"]["must"].append({"match": {"entity_type": SEARCH_TO_UNIVERSAL[entity_type]}})
+        if search_term != "*":
+            match_query["bool"]["must"].append({"match": {"value": search_term}})
+        if entity_type != "Všechny":
+            match_query["bool"]["must"].append({"match": {"entity_type": entity_type}})
+
+        # check query not empty
+        if match_query["bool"]["must"]:
+            search_query["bool"]["should"].append(match_query)
 
     index = dataset
     if index == "Všechny":
@@ -40,7 +39,7 @@ def find_entities(es: Elasticsearch, term, dataset, entity_type, page, page_size
 
     start_index = (page - 1) * 10
 
-    response = es.search(index=index, query=query, from_=start_index, size=page_size)
+    response = es.search(index=index, query=search_query, from_=start_index, size=page_size)
     return response["hits"]["total"]["value"], response['hits']['hits']
 
 
@@ -72,7 +71,7 @@ def aggregate_by_field(field, index, client: Elasticsearch):
 
             "terms": {
                 "size": 100,
-                "field": "category.keyword"
+                "field": f"{field}.keyword"
             }
         }
     }
