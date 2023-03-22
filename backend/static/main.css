@@ -1,5 +1,5 @@
-body {
-    min-height: 100vh;
+.container {
+    max-width: 75vw;
 }
 
 /* Tmavý režim */
@@ -23,23 +23,17 @@ header {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-header .navbar-brand {
-    font-size: 24px;
+.navbar-brand {
+    font-size: 1.5rem;
     font-weight: bold;
 }
 
 /* Formulář pro vyhledávání */
-form {
-    margin-top: 20px;
-}
 
 form label {
     font-weight: bold;
 }
 
-form .form-control {
-    height: 40px;
-}
 
 /* Seznam výsledků vyhledávání */
 .list-group-item {

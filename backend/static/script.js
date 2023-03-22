@@ -40,7 +40,7 @@ function loadResults(formData, url) {
 
 function addSearchCondition() {
     const inputGroup = document.createElement("div");
-    inputGroup.classList.add("input-group", "mt-2");
+    inputGroup.classList.add("input-group", "col-md-12", "mb-3");
 
     const prependDiv = document.createElement("div");
     prependDiv.classList.add("input-group-prepend");

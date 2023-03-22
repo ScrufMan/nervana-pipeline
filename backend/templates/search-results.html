@@ -11,12 +11,12 @@
 
             <li class="list-group-item mb-2">
                 <div class="row">
-                    <div class="col-md-10">
+                    <div class="col-lg-10 col-md-8">
                         <h5><a href="#">{{ entity.filename }}</a></h5>
                         <p style="letter-spacing: 1px;">{{ entity.context|safe }}</p>
                         <small class="text-muted">{{ entity.dataset }}</small>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-lg-2 col-md-4 d-flex align-items-md-center">
                         <div><a
                                 href="{{ url_for("show_file", dataset=entity.dataset, file_id=entity.file_id) }}"
                                 target="_blank"
