@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="row justify-content-center mb-4 mt-3">
+
+        <div class="col-md-10">
+            <!-- Formulář pro vyhledávání -->
+            <form method="post" action="" id="search-form">
+                {{ form.hidden_tag() }}
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        {{ form.search_term.label() }}
+                        {{ form.search_term(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.dataset.label() }}
+                        {{ form.dataset(class="form-control") }}
+                    </div>
+                    <div class="form-group col-md-3">
+                        {{ form.entity_type.label() }}
+                        {{ form.entity_type(class="form-control") }}
+                    </div>
+                </div>
+                <div class="form-row" id="additional-search-conditions">
+                    <div class="form-group col-md-12">
+                        <button class="btn btn-outline-secondary mr-2" type="button"
+                                onclick="addSearchCondition()">+
+                        </button>
+                        <label>Přidat další podmínku vyhledávání</label>
+                    </div>
+                </div>
+                {{ form.submit(class="btn btn-primary btn-lg mx-auto mb-3 d-block") }}
+            </form>
+
+            <div class="results">
+
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}

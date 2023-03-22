@@ -1,0 +1,36 @@
+<!-- Seznam výsledků vyhledávání -->
+<ul class="list-group mt-3">
+
+    {% if total_hits == 0 %}
+        <li class="list-group-item danger">Žádné nalezené entity</li>
+
+    {% else %}
+        <li class="list-group-item active">Nalezeno {{ total_hits }}</li>
+
+        {% for entity in results %}
+
+            <li class="list-group-item mb-2">
+                <div class="row">
+                    <div class="col-lg-10 col-md-8">
+                        <h5><a href="#">{{ entity.filename }}</a></h5>
+                        <p style="letter-spacing: 1px;">{{ entity.context|safe }}</p>
+                        <small class="text-muted">{{ entity.dataset }}</small>
+                    </div>
+                    <div class="col-lg-2 col-md-4 d-flex align-items-md-center">
+                        <div><a
+                                href="{{ url_for("show_file", dataset=entity.dataset, file_id=entity.file_id) }}"
+                                target="_blank"
+                                class="btn btn-secondary d-block mb-3"
+                                style="color:white;">Náhled</a>
+                            <a href="{{ url_for("show_file", dataset=entity.dataset, file_id=entity.file_id) }}"
+                               target="_blank"
+                               class="btn btn-secondary d-block"
+                               style="color:white;">Stáhnout</a></div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+
+    {% endif %}
+</ul>
+<div class="pagination-div col-md-10 mt-2">{{ pagination.links }}</div>
