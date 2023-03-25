@@ -1,0 +1,28 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3.js NetworkX Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .node {
+            fill: #ccc;
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+    </style>
+</head>
+<body>
+<svg width="1000" height="1000"></svg>
+<script src="{{ url_for('static', filename='d3network.js') }}"></script>
+<script>
+    var graphData = {{ data|safe }};
+    d3network(graphData);
+</script>
+</body>
+</html>

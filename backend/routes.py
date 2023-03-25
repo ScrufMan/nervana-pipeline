@@ -1,4 +1,6 @@
-from flask import render_template, request
+import json
+
+from flask import render_template, request, jsonify
 from elastic import get_all_datasets, find_entities, get_all_files, get_most_popular_by_type, get_file
 
 from backend import app, es
@@ -6,6 +8,7 @@ from backend.forms import SearchForm
 from backend.models import entities_from_hits
 from tika import parser
 from flask_paginate import Pagination
+from email_analyzer import run_analysis
 
 PAGE_SIZE = 10
 
@@ -67,3 +70,20 @@ def stats():
     datasets = get_all_datasets(es)
     get_most_popular_by_type(es, "format", "Všechny")
     return render_template("stats.html", datasets=datasets)
+
+@app.route("/email")
+def email():
+    return render_template("email.html")
+
+@app.route("/email-graph")
+def email_graph():
+    graph, pos = run_analysis(r"C:\Users\bukaj\code\school\bakalarka\email_analyzer\sample_emails")
+
+    # Convert the graph data into a JSON format that D3.js can understand
+    nodes = [{"id": str(n), "x": pos[n][0], "y": pos[n][1]} for n in graph.nodes()]
+    links = [{"source": str(u), "target": str(v)} for u, v in graph.edges()]
+
+    data = {"nodes": nodes, "links": links}
+    json_data = json.dumps(data)
+
+    return render_template("email.html", data=json_data)
