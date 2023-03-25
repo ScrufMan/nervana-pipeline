@@ -1,7 +1,9 @@
 $(document).ready(function () {
+    let originalFormData;
     $('#search-form').submit(function (event) {
         event.preventDefault();
         const formData = $(this).serialize();
+        originalFormData = $('#search-form').serialize();
         const searchUrl = "/search"
         loadResults(formData, searchUrl);
     });
@@ -11,32 +13,24 @@ $(document).ready(function () {
             return
         }
         event.preventDefault();
-        const formData = $('#search-form').serialize();
+        // send form as it was submitted
+        const formData = originalFormData;
         const pageUrl = $(this).attr('href');
+
+        $('.results').fadeOut(200)
         loadResults(formData, pageUrl);
+        $('.results').fadeIn(200)
         // element to scroll to
         const target = $('.results');
 
+
+        $('#search-form').se;
         // scroll to the element
         $('html, body').animate({
             scrollTop: target.offset().top
         }, 200);
     });
 });
-
-function loadResults(formData, url) {
-    $.ajax({
-        type: 'POST',
-        url: url,
-        data: formData,
-        success: function (data) {
-            $('.results').html(data.results);
-        },
-        error: function () {
-            alert('Error loading results.');
-        }
-    });
-}
 
 let nextFieldIdx = 1;
 
@@ -80,4 +74,18 @@ function addSearchCondition() {
     additionalSearchConditions.appendChild(inputGroup);
 
     nextFieldIdx++;
+}
+
+function loadResults(formData, url) {
+    $.ajax({
+        type: 'POST',
+        url: url,
+        data: formData,
+        success: function (data) {
+            $('.results').html(data.results);
+        },
+        error: function () {
+            alert('Error loading results.');
+        }
+    });
 }
