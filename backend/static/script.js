@@ -1,4 +1,17 @@
 $(document).ready(function () {
+    // don't close dropdown menu when clicking on label
+    $('.dropdown-menu').on('click', 'label, button', function (e) {
+        e.stopPropagation();
+    });
+
+    $("#check-all").click(function () {
+        $("input[name='entity_types']").prop('checked', true);
+    });
+
+    $("#uncheck-all").click(function () {
+        $("input[name='entity_types']").prop('checked', false);
+    });
+
     let originalFormData;
     $('#search-form').submit(function (event) {
         event.preventDefault();
@@ -59,13 +72,7 @@ function addSearchCondition() {
     const appendDiv = document.createElement("div");
     appendDiv.classList.add("input-group-append");
 
-    const defaultSelect = document.getElementById("entity_types-0");
-    const select = defaultSelect.cloneNode(true);
-    select.removeAttribute("id");
-    select.name = `entity_types-${nextFieldIdx}`;
-
     prependDiv.appendChild(button);
-    appendDiv.appendChild(select);
     inputGroup.appendChild(prependDiv);
     inputGroup.appendChild(input);
     inputGroup.appendChild(appendDiv);

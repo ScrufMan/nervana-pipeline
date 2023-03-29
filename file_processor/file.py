@@ -8,7 +8,7 @@ from .filters import filter_plaintext
 from .metadata import get_file_format
 
 FILTER = True
-# lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
+lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
 
 
 class File:
@@ -32,7 +32,7 @@ class File:
 
             self.plaintext = tika_response["content"]
             self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
-            # self.lang = lang_detetctor.detect_language_of(self.plaintext)
+            self.lang = lang_detetctor.detect_language_of(self.plaintext)
 
             if FILTER:
                 filter_plaintext(self)

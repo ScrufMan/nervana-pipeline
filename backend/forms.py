@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, FieldList
+from wtforms import StringField, SelectField, SubmitField, FieldList, SelectMultipleField, widgets, FormField
 from wtforms.validators import DataRequired, Length
 
 from backend import es
@@ -21,7 +21,9 @@ entity_types_choices = [
 class SearchForm(FlaskForm):
     search_terms = FieldList(StringField("Hledat:", validators=[DataRequired(), Length(min=1)],
                                          render_kw={"placeholder": "Zadejte hledaný výraz"}), min_entries=1)
-    dataset = SelectField('Datová sada:', validators=[DataRequired()], choices=["Všechny"] + get_all_datasets(es))
-    entity_types = FieldList(SelectField('Typ:', validators=[DataRequired()], choices=entity_types_choices),
-                             min_entries=1)
+    dataset = SelectField('Datová sada:', validators=[DataRequired()],
+                          choices=[("_all", "Všechny")] + get_all_datasets(es))
+    entity_types = SelectMultipleField("Typ:", choices=entity_types_choices,
+                                       widget=widgets.Select(),
+                                       option_widget=widgets.CheckboxInput())
     submit = SubmitField("Hledat")

@@ -1,9 +1,5 @@
-<!-- index.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>D3.js NetworkX Visualization</title>
-    <script src="https://d3js.org/d3.v6.min.js"></script>
+{% extends "layout.html" %}
+{% block content %}
     <style>
         .link {
             stroke: #999;
@@ -16,13 +12,11 @@
             stroke-width: 1.5px;
         }
     </style>
-</head>
-<body>
-<svg width="1000" height="1000"></svg>
-<script src="{{ url_for('static', filename='d3network.js') }}"></script>
-<script>
-    var graphData = {{ data|safe }};
-    d3network(graphData);
-</script>
-</body>
-</html>
+    <h2>Graf pro dataset Emailovej komunikace</h2>
+    <svg width="1000" height="1000"></svg>
+    <script src="{{ url_for('static', filename='d3network.js') }}"></script>
+    <script>
+        var graphData = {{ data|safe }};
+        d3network(graphData);
+    </script>
+{% endblock content %}

@@ -18,10 +18,24 @@
                         {{ form.dataset(class="form-control") }}
                     </div>
                     <div class="form-group col-md-3">
-                        {% for entity_type in form.entity_types %}
-                            {{ entity_type.label() }}
-                            {{ entity_type(class="form-control") }}
-                        {% endfor %}
+                        <div class="dropdown">
+                            <button class="btn dropdown-toggle p-0 ml-0 ml-md-4" type="button" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="true">
+                                {{ form.entity_types.label() }} <span class="caret"></span>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="{{ form.entity_types.id }}">
+                                <div class="pr-3"> {% for checkbox in form.entity_types %}
+                                    <div class="form-check">
+                                        {{ checkbox(checked='checked') }}
+                                        {{ checkbox.label() }}
+                                    </div>
+                                {% endfor %}</div>
+                                <div class="d-flex justify-content-around mt-1">
+                                    <button class="btn btn-link p-0" type="button" id="check-all">Všechny</button>
+                                    <button class="btn btn-link p-0" type="button" id="uncheck-all">Žádné</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-row" id="additional-search-conditions">

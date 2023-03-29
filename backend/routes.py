@@ -16,37 +16,36 @@ PAGE_SIZE = 10
 @app.route("/search", methods=["GET", "POST"])
 def search():
     form = SearchForm(request.form)
-    datasets = get_all_datasets(es)
 
-    if request.method == "GET":
-        return render_template("search.html", form=form, datasets=datasets)
+    if request.method == "GET" or not form.validate_on_submit():
+        return render_template("search.html", form=form)
+
+    # Handle api call for ajax
 
     page = request.args.get("page", 1, type=int)
 
-    if form.validate():
-        dataset = form.dataset.data
-        search_terms = form.search_terms.data
-        entity_types = form.entity_types.data
+    dataset = form.dataset.data
+    search_terms = form.search_terms.data
+    entity_types = form.entity_types.data
 
-        search_conditions = zip(search_terms, entity_types)
+    hits = find_entities(es, dataset, search_terms, entity_types, page, PAGE_SIZE)
+    total_hits = hits.hits.total.value
 
-        total_hits, hits = find_entities(es, dataset, search_conditions, page, PAGE_SIZE)
+    file_hits = get_all_files(es, dataset)
+    results = entities_from_hits(hits, file_hits)
 
-        file_hits = get_all_files(es, dataset)
-        results = entities_from_hits(hits, file_hits)
+    pagination = Pagination(
+        page=page,
+        total=total_hits,
+        per_page=PAGE_SIZE,
+        css_framework='bootstrap4',
+        link_attr={'class': 'my-link-class'}
+    )
 
-        pagination = Pagination(
-            page=page,
-            total=total_hits,
-            per_page=PAGE_SIZE,
-            css_framework='bootstrap4',
-            link_attr={'class': 'my-link-class'}
-        )
+    results_html = render_template('search-results.html', results=results, pagination=pagination,
+                                   total_hits=total_hits)
 
-        results_html = render_template('search-results.html', results=results, pagination=pagination,
-                                       total_hits=total_hits)
-
-        return {'results': results_html}
+    return {'results': results_html}
 
 
 @app.route("/file/<string:dataset>/<string:file_id>")
@@ -71,9 +70,11 @@ def stats():
     get_most_popular_by_type(es, "format", "Všechny")
     return render_template("stats.html", datasets=datasets)
 
+
 @app.route("/email")
 def email():
     return render_template("email.html")
+
 
 @app.route("/email-graph")
 def email_graph():

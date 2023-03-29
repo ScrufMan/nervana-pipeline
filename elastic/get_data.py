@@ -1,58 +1,52 @@
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, Q
 
 
 def get_all_datasets(es: Elasticsearch):
     indices = es.indices.get_alias().keys()
-    datasets = [index for index in indices if not index.startswith('.')]
+    datasets = [(index, index) for index in indices if not index.startswith('.')]
     return datasets
 
 
-def find_entities(es: Elasticsearch, dataset, search_conditions, page, page_size):
-    search_query = {
-        "bool": {
-            "must": [
-                {"match": {"type": "entity"}}
-            ],
-            "should": []
-        }
-    }
+def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, page_size):
+    s = Search(using=es, index=index)
 
-    for search_term, entity_type in search_conditions:
-        match_query = {
-            "bool": {
-                "must": []
-            }
-        }
+    search_from = (page - 1) * page_size
+    s = s[search_from:search_from + page_size]
 
-        if search_term != "*":
-            match_query["bool"]["must"].append({"match": {"value": search_term}})
-        if entity_type != "Všechny":
-            match_query["bool"]["must"].append({"match": {"entity_type": entity_type}})
+    # type of document must be entity
+    document_type_query = Q('term', type="entity")
 
-        # check query not empty
-        if match_query["bool"]["must"]:
-            search_query["bool"]["should"].append(match_query)
+    # create a query to match documents with any of the given entity types
+    entity_type_query = Q('terms', entity_type=entity_types)
 
-    index = dataset
-    if index == "Všechny":
-        index = "_all"
+    # create a query to match entites with any of the given values
+    values_query = None
+    for search_term in search_terms:
+        if search_term.startswith('r:'):
+            values_query_part = Q('query_string', query=search_term[2:], fuzziness='2', default_field='value')
+        else:
+            values_query_part = Q('fuzzy', value={'value': search_term, 'fuzziness': '2'})
+        if values_query is None:
+            values_query = values_query_part
+        else:
+            values_query |= values_query_part
 
-    start_index = (page - 1) * 10
+    # combine the two queries with an "and" operator
+    combined_query = document_type_query & entity_type_query & values_query
 
-    response = es.search(index=index, query=search_query, from_=start_index, size=page_size)
-    return response["hits"]["total"]["value"], response['hits']['hits']
+    # execute the search
+    response = s.query(combined_query).execute()
+
+    return response
 
 
-def get_all_files(es, dataset):
-    index = dataset
-    if index == "Všechny":
-        index = "_all"
+def get_all_files(es: Elasticsearch, index):
+    s = Search(using=es, index=index)
+    s = s[0:10000]
+    response = s.query(Q("term", type="file")).execute()
 
-    query = {
-        "match": {"type": "file"}
-    }
-    response = es.search(index=index, query=query)
-    return response['hits']['hits']
+    return response
 
 
 def get_file(es, dataset, file_id):
