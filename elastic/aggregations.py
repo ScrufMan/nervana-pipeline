@@ -1,30 +1,31 @@
 from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, Q
+from elasticsearch_dsl.aggs import Terms
 
 
-def get_most_popular_by_type(es: Elasticsearch, field, dataset):
-    index = dataset
-    if index == "Všechny":
-        index = "_all"
+def get_top_values_for_field(es: Elasticsearch, index, type_field_name, entity_type, field_name):
+    s = Search(using=es, index=index)
 
-    query = {
-        "aggs": {
-            "categories": {
-                "terms": {
-                    "field": f"{field}.keyword",
-                    "size": 5
-                }
-            }
-        },
-        "size": 0
-    }
+    kwargs = {type_field_name: entity_type}
+    # Add a filter to only include documents with the specified entity_type
+    s = s.filter(Q('term', **kwargs))
 
-    # Execute the query and get the results
-    result = es.search(index=index, body=query)
-    total_count = result["hits"]["total"]["value"]
-    # Extract the category buckets from the results
-    buckets = result["aggregations"]["categories"]["buckets"]
+    # Define the Terms aggregation to get the top 5 values for the field
+    aggs = Terms(field=field_name, size=5)
 
-    for bucket in buckets:
-        category = bucket["key"]
-        count = bucket["doc_count"]
-        percentage_occurrence = count / total_count * 100
+    # Add the aggregation to the search
+    s.aggs.bucket("top_values", aggs)
+
+    # Execute the search
+    response = s.execute()
+
+    # Process the aggregation results
+    total_docs = response.hits.total.value
+    top_values = {}
+    for bucket in response.aggregations.top_values.buckets:
+        value = bucket.key
+        count = bucket.doc_count
+        percentage = round((count / total_docs) * 100, 2)
+        top_values[value] = percentage
+
+    return top_values

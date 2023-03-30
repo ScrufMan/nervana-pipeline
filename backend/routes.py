@@ -1,7 +1,7 @@
 import json
 
 from flask import render_template, request, jsonify
-from elastic import get_all_datasets, find_entities, get_all_files, get_most_popular_by_type, get_file
+from elastic import get_all_datasets, find_entities, get_all_files, get_file, get_top_values_for_field
 
 from backend import app, es
 from backend.forms import SearchForm
@@ -14,6 +14,7 @@ PAGE_SIZE = 10
 
 
 @app.route("/search", methods=["GET", "POST"])
+# TODO: export to csv, dataset, filename, type, value, context
 def search():
     form = SearchForm(request.form)
 
@@ -64,10 +65,11 @@ def show_file(dataset, file_id):
     return render_template("file.html", path=path, plaintext=plaintext)
 
 
+@app.route("/")
 @app.route("/stats")
 def stats():
     datasets = get_all_datasets(es)
-    get_most_popular_by_type(es, "format", "Všechny")
+    get_top_values_for_field(es, "zachyt_1", "entity_type", "person", "value.keyword")
     return render_template("stats.html", datasets=datasets)
 
 

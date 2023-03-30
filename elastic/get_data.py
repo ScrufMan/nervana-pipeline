@@ -26,7 +26,7 @@ def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, pa
         if search_term.startswith('r:'):
             values_query_part = Q('query_string', query=search_term[2:], fuzziness='2', default_field='value')
         else:
-            values_query_part = Q('fuzzy', value={'value': search_term, 'fuzziness': '2'})
+            values_query_part = Q('fuzzy', value={'value': search_term, 'fuzziness': 'AUTO'})
         if values_query is None:
             values_query = values_query_part
         else:
@@ -36,7 +36,7 @@ def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, pa
     combined_query = document_type_query & entity_type_query & values_query
 
     # execute the search
-    response = s.query(combined_query).execute()
+    response = s.query(values_query).execute()
 
     return response
 
@@ -57,17 +57,3 @@ def get_file(es, dataset, file_id):
         return res["_source"]
     except Exception as e:
         print(f"Error retrieving document: {e}")
-
-
-def aggregate_by_field(field, index, client: Elasticsearch):
-    agg = {
-        "by_field": {
-
-            "terms": {
-                "size": 100,
-                "field": f"{field}.keyword"
-            }
-        }
-    }
-    response = client.search(index=index, aggs=agg)
-    return response['aggregations']['by_field']['buckets']

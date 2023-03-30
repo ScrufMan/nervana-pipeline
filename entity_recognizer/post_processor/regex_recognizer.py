@@ -1,6 +1,7 @@
 import re
 from entity_recognizer.entity import Entity
 from entity_recognizer.helper import get_context
+from . import lemmatize_text
 
 
 def find_phone_numbers(data, phones):
@@ -20,7 +21,7 @@ def find_btc_adresses(plaintext, file_id):
     matches = re.findall(r"[13][a-km-zA-HJ-NP-Z1-9]{25,34}", plaintext)
     for match in matches:
         context = get_context(match, plaintext)
-        entity = Entity("btc_adress", match, context, file_id)
+        entity = Entity("btc_adress", match, lemmatize_text(match), context, file_id)
         btc_adresses.append(entity)
     return btc_adresses
 
@@ -32,6 +33,6 @@ def find_bank_accounts(plaintext, file_id):
         plaintext)
     for match in matches:
         context = get_context(match, plaintext)
-        entity = Entity("bank_account", match, context, file_id)
+        entity = Entity("bank_account", match, lemmatize_text(match), context, file_id)
         ibans.append(entity)
     return ibans

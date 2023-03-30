@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 from entity_recognizer.helper import get_context
+from entity_recognizer.post_processor import lemmatize_text
 
 from .entity import Entity
 
@@ -61,11 +62,12 @@ def get_entities(tokenized_data, file_id):
         if universal_type == "unknown":
             continue
 
-        entity_value = tokenized_entity.text
+        entity_form = tokenized_entity.text
+        lematized_value = lemmatize_text(entity_form)
 
-        context = get_context(entity_value, tokenized_entity.parent.text)
+        context = get_context(entity_form, tokenized_entity.parent.text)
 
-        entity = Entity(universal_type, entity_value, context, file_id)
+        entity = Entity(universal_type, entity_form, lematized_value, context, file_id)
         entities.append(entity)
 
     return entities

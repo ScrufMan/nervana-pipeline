@@ -11,9 +11,28 @@ def create_index_if_not_exists(es: Elasticsearch, index_name):
     # Check if index exists
     try:
         es.indices.get(index=index_name)
+        return
     except NotFoundError:
         # If index does not exist, create it
-        es.indices.create(index=index_name)
+        mapping = {
+            "mappings": {
+                "properties": {
+                    "type": {"type": "keyword"},
+                    "filename": {"type": "text"},
+                    "format": {"type": "keyword"},
+                    "language": {"type": "keyword"},
+                    "path": {"type": "text"},
+                    "timestamp": {"type": "date"},
+                    "context": {"type": "text"},
+                    "entity_type": {"type": "keyword"},
+                    "file_id": {"type": "keyword"},
+                    "value": {"type": "text"},
+                    "lematized": {"type": "text"}
+                }
+            }
+        }
+
+        es.indices.create(index=index_name, body=mapping)
 
 
 def index_file(es: Elasticsearch, index_name, file: File):

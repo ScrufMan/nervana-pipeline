@@ -12,7 +12,7 @@ lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
 
 
 class File:
-
+    # TODO: save fileauthor metadata
     def __init__(self, path):
         self.path_obj = pathlib.PurePath(path)
         self.path = self.path_obj.__str__()
