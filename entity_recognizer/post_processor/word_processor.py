@@ -8,11 +8,11 @@ def lemmatize_text(text):
     response.raise_for_status()
     lemmas = response.json()
     if lemmas:
-        lematized_text = ""
-        for lematized_part in lemmas["result"]:
-            for word_part in lematized_part:
-                lematized_text += word_part["analyses"][0]["lemma"].lower()
-                lematized_text += word_part.get("space", "")
-        return lematized_text
+        lemmatized_text = ""
+        for lemmatized_part in lemmas["result"]:
+            for word_part in lemmatized_part:
+                lemmatized_text += word_part["analyses"][0]["lemma"].lower()
+                lemmatized_text += word_part.get("space", "")
+        return lemmatized_text
     else:
         return text

@@ -2,46 +2,64 @@ from typing import List
 
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch.helpers import bulk
 
 from entity_recognizer import Entity
 from file_processor import File
 
 
-def create_index_if_not_exists(es: Elasticsearch, index_name):
+def create_index_if_not_exists(es: Elasticsearch, dataset):
     # Check if index exists
     try:
-        es.indices.get(index=index_name)
+        es.indices.get(index=f"{dataset}-files")
         return
     except NotFoundError:
         # If index does not exist, create it
-        mapping = {
-            "mappings": {
-                "properties": {
-                    "type": {"type": "keyword"},
-                    "filename": {"type": "text"},
-                    "format": {"type": "keyword"},
-                    "language": {"type": "keyword"},
-                    "path": {"type": "text"},
-                    "timestamp": {"type": "date"},
-                    "context": {"type": "text"},
-                    "entity_type": {"type": "keyword"},
-                    "file_id": {"type": "keyword"},
-                    "value": {"type": "text"},
-                    "lematized": {"type": "text"}
+
+        # create index for files
+        file_index_name = f'{dataset}-files'
+        file_mappings = {
+            'mappings': {
+                'properties': {
+                    'filename': {'type': 'text'},
+                    'path': {'type': 'text'},
+                    'format': {'type': 'text'},
+                    'plaintext': {'type': 'text'},
+                    'language': {'type': 'text'},
+                    'author': {'type': 'text'},
+                    'timestamp': {'type': 'date'},
                 }
             }
         }
+        es.indices.create(index=file_index_name, body=file_mappings)
 
-        es.indices.create(index=index_name, body=mapping)
+        # create index for entities
+        entity_index_name = f'{dataset}-entities'
+        entity_mappings = {
+            "mappings": {
+                "properties": {
+                    "entity_type": {"type": "text"},
+                    "value": {"type": "text"},
+                    "lemmatized": {"type": "text"},
+                    "context": {"type": "text"},
+                    "file_id": {"type": "keyword"}
+                }
+            }
+        }
+        es.indices.create(index=entity_index_name, body=entity_mappings)
 
 
-def index_file(es: Elasticsearch, index_name, file: File):
+def index_file(es: Elasticsearch, dataset, file: File):
+    index_name = f"{dataset}-files"
     document = file.make_document()
     response = es.index(index=index_name, document=document)
     return response["_id"]
 
 
-def index_entities(es: Elasticsearch, index_name, entities: List[Entity]):
-    for entity in entities:
-        document = entity.make_document()
-        es.index(index=index_name, document=document)
+def index_entities(es: Elasticsearch, dataset, entities: List[Entity]):
+    index_name = f"{dataset}-entities"
+
+    entities = map(lambda ent: ent.make_document(), entities)
+    entities_actions = map(lambda ent: {"_index": index_name, "_source": ent}, entities)
+
+    bulk(es, entities_actions)

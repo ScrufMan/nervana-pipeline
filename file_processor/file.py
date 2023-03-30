@@ -12,7 +12,6 @@ lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
 
 
 class File:
-    # TODO: save fileauthor metadata
     def __init__(self, path):
         self.path_obj = pathlib.PurePath(path)
         self.path = self.path_obj.__str__()
@@ -20,6 +19,7 @@ class File:
         self.format = get_file_format(path)
         self.plaintext = ""
         self.lang = None
+        self.author = None
         self.timestamp = None
 
     def process_file(self):
@@ -32,6 +32,7 @@ class File:
 
             self.plaintext = tika_response["content"]
             self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
+            self.author = tika_response["metadata"].get("Author", None)
             self.lang = lang_detetctor.detect_language_of(self.plaintext)
 
             if FILTER:
@@ -45,11 +46,12 @@ class File:
 
     def make_document(self):
         document = {
-            "type": "file",
             "filename": self.filename,
             "path": self.path,
             "format": self.format,
+            "plaintext": self.plaintext,
             "language": self.lang.name.lower(),
+            "author": self.author,
             "timestamp": self.timestamp
         }
 

@@ -22,7 +22,6 @@ def search():
         return render_template("search.html", form=form)
 
     # Handle api call for ajax
-
     page = request.args.get("page", 1, type=int)
 
     dataset = form.dataset.data

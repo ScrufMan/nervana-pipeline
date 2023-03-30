@@ -63,11 +63,11 @@ def get_entities(tokenized_data, file_id):
             continue
 
         entity_form = tokenized_entity.text
-        lematized_value = lemmatize_text(entity_form)
+        lemmatized_value = lemmatize_text(entity_form)
 
         context = get_context(entity_form, tokenized_entity.parent.text)
 
-        entity = Entity(universal_type, entity_form, lematized_value, context, file_id)
+        entity = Entity(universal_type, entity_form, lemmatized_value, context, file_id)
         entities.append(entity)
 
     return entities

@@ -3,19 +3,26 @@ from elasticsearch_dsl import Search, Q
 
 
 def get_all_datasets(es: Elasticsearch):
-    indices = es.indices.get_alias().keys()
-    datasets = [(index, index) for index in indices if not index.startswith('.')]
+    indices = es.cat.indices(format="json")
+    datasets = [(index["index"].split("-files")[0], index["index"].split("-files")[0]) for index in indices if
+                not (index["index"].startswith(".") or index["index"].endswith("-entities"))]
     return datasets
 
 
-def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, page_size):
+def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, page_size):
+    if dataset == "_all":
+        # Get a list of all indices in the cluster
+        indices = es.cat.indices(format="json")
+
+        # Filter out the indices that end with "-entities"
+        index = [index["index"] for index in indices if index["index"].endswith("-entities")]
+    else:
+        index = f"{dataset}-entities"
+
     s = Search(using=es, index=index)
 
     search_from = (page - 1) * page_size
     s = s[search_from:search_from + page_size]
-
-    # type of document must be entity
-    document_type_query = Q('term', type="entity")
 
     # create a query to match documents with any of the given entity types
     entity_type_query = Q('terms', entity_type=entity_types)
@@ -24,16 +31,16 @@ def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, pa
     values_query = None
     for search_term in search_terms:
         if search_term.startswith('r:'):
-            values_query_part = Q('query_string', query=search_term[2:], fuzziness='2', default_field='value')
+            values_query_part = Q('query_string', query=search_term[2:], fuzziness='AUTO', default_field='value')
         else:
-            values_query_part = Q('fuzzy', value={'value': search_term, 'fuzziness': 'AUTO'})
+            values_query_part = Q('fuzzy', lemmatized={'value': search_term, 'fuzziness': 'AUTO'})
         if values_query is None:
             values_query = values_query_part
         else:
             values_query |= values_query_part
 
     # combine the two queries with an "and" operator
-    combined_query = document_type_query & entity_type_query & values_query
+    combined_query = entity_type_query & values_query
 
     # execute the search
     response = s.query(values_query).execute()
@@ -41,16 +48,32 @@ def find_entities(es: Elasticsearch, index, search_terms, entity_types, page, pa
     return response
 
 
-def get_all_files(es: Elasticsearch, index):
+def get_all_files(es: Elasticsearch, dataset):
+    if dataset == "_all":
+        # Get a list of all indices in the cluster
+        indices = es.cat.indices(format="json")
+
+        # Filter out the indices that end with "-entities"
+        index = [index["index"] for index in indices if index["index"].endswith("-files")]
+    else:
+        index = f"{dataset}-files"
+
     s = Search(using=es, index=index)
     s = s[0:10000]
-    response = s.query(Q("term", type="file")).execute()
+    response = s.query(Q("match_all")).execute()
 
     return response
 
 
 def get_file(es, dataset, file_id):
-    index = dataset
+    if dataset == "_all":
+        # Get a list of all indices in the cluster
+        indices = es.cat.indices(format="json")
+
+        # Filter out the indices that end with "-entities"
+        index = [index["index"] for index in indices if index["index"].endswith("-files")]
+    else:
+        index = f"{dataset}-entities"
 
     try:
         res = es.get(index=index, id=file_id)
