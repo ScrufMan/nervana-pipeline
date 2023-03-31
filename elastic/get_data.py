@@ -1,5 +1,6 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
+from entity_recognizer.post_processor import lemmatize_text
 
 
 def get_all_datasets(es: Elasticsearch):
@@ -30,7 +31,9 @@ def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, 
     # create a query to match entites with any of the given values
     values_query = None
     for search_term in search_terms:
-        if search_term.startswith('r:'):
+        if search_term.startswith('"') and search_term.endswith('"'):
+            values_query_part = Q('match', value=search_term[1:-1])
+        elif search_term.startswith('r:'):
             values_query_part = Q('query_string', query=search_term[2:], fuzziness='AUTO', default_field='value')
         else:
             values_query_part = Q('fuzzy', lemmatized={'value': search_term, 'fuzziness': 'AUTO'})

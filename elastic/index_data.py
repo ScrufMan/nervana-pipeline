@@ -35,18 +35,35 @@ def create_index_if_not_exists(es: Elasticsearch, dataset):
 
         # create index for entities
         entity_index_name = f'{dataset}-entities'
-        entity_mappings = {
+        entity_settings = {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "lemmatized_lowercase": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": [
+                                "lowercase",
+                                "asciifolding"
+                            ]
+                        }
+                    }
+                }
+            },
             "mappings": {
                 "properties": {
                     "entity_type": {"type": "text"},
                     "value": {"type": "text"},
-                    "lemmatized": {"type": "text"},
+                    "lemmatized": {
+                        "type": "text",
+                        "analyzer": "lemmatized_lowercase"
+                    },
                     "context": {"type": "text"},
                     "file_id": {"type": "keyword"}
                 }
             }
         }
-        es.indices.create(index=entity_index_name, body=entity_mappings)
+        es.indices.create(index=entity_index_name, body=entity_settings)
 
 
 def index_file(es: Elasticsearch, dataset, file: File):
