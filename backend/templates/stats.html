@@ -1,270 +1,105 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="row">
-        <div class="col-md-3">
-            <!-- Levé menu -->
-            <ul class="list-group mt-4">
-                <li class="list-group-item active">Všechny datové sady</li>
-                {% for dataset in datasets %}
-                    <li class="list-group-item list-group-item-action list-group-item-light">{{ dataset[0] }}</li>
-                {% endfor %}
+    <div id="my_dataviz"></div>
+    <script>
 
-            </ul>
-        </div>
-        <!-- Start -->
-        <!-- Okno pro zobrazení statistiky -->
-        <div class="card mt-4">
-            <div class="card-header">
-                Statistika datové sady
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější typy souborů
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">PDF (54%)</li>
-                                    <li class="list-group-item">XLSX (23%)</li>
-                                    <li class="list-group-item">CSV (18%)</li>
-                                    <li class="list-group-item">DOCX (5%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější kategorie souborů
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Finance (32%)</li>
-                                    <li class="list-group-item">Zdravotnictví (26%)</li>
-                                    <li class="list-group-item">Vzdělávání (18%)</li>
-                                    <li class="list-group-item">Právo (13%)</li>
-                                    <li class="list-group-item">Technologie (11%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější jména osob
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Jan Novák (10%)</li>
-                                    <li class="list-group-item">Jana Nováková (8%)</li>
-                                    <li class="list-group-item">Petr Svoboda (6%)</li>
-                                    <li class="list-group-item">Martin Marek (5%)</li>
-                                    <li class="list-group-item">Lucie Hrušková (4%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější názvy organizací
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Česká spořitelna (23%)</li>
-                                    <li class="list-group-item">Všeobecná zdravotní pojišťovna (18%)</li>
-                                    <li class="list-group-item">Ministerstvo zdravotnictví (13%)</li>
-                                    <li class="list-group-item">Ministerstvo financí (10%)</li>
-                                    <li class="list-group-item">Škoda auto (8%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější bankovní účty
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">CZ112233445566778899 (30%)</li>
-                                    <li class="list-group-item">CZ112233445566778800 (25%)</li>
-                                    <li class="list-group-item">CZ112233445566778811 (20%)</li>
-                                    <li class="list-group-item">CZ112233445566778822 (15%)</li>
-                                    <li class="list-group-item">CZ112233445566778833 (10%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější emailové adresy
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">jan.novak@email.com (10%)</li>
-                                    <li class="list-group-item">jana.novakova@email.com (8%)</li>
-                                    <li class="list-group-item">petr.svoboda@email.com (6%)</li>
-                                    <li class="list-group-item">martin.marek@email.com (5%)</li>
-                                    <li class="list-group-item">lucie.hruskova@email.com (4%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Datum vytvoření souborů podle roků
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">2018 (35%)</li>
-                                    <li class="list-group-item">2019 (30%)</li>
-                                    <li class="list-group-item">2020 (20%)</li>
-                                    <li class="list-group-item">2021 (15%)</li>
-                                    <li class="list-group-item">2014 (5%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější autor
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Jan Novák (10%)</li>
-                                    <li class="list-group-item">Jana Nováková (8%)</li>
-                                    <li class="list-group-item">Petr Svoboda (6%)</li>
-                                    <li class="list-group-item">Martin Marek (5%)</li>
-                                    <li class="list-group-item">Lucie Hrušková (4%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější jazyky
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Čeština (70%)</li>
-                                    <li class="list-group-item">Angličtina (20%)</li>
-                                    <li class="list-group-item">Němčina (5%)</li>
-                                    <li class="list-group-item">Francouzština (3%)</li>
-                                    <li class="list-group-item">Španělština (2%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější zeměpisné souřadnice
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">50.0878114, 14.4204598 (25%)</li>
-                                    <li class="list-group-item">50.0755395, 14.4378005 (20%)</li>
-                                    <li class="list-group-item">50.0926549, 14.5044751 (15%)</li>
-                                    <li class="list-group-item">50.0821284, 14.4806914 (10%)</li>
-                                    <li class="list-group-item">50.0705627, 14.4499156 (5%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější IP adresy
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">192.168.0.1 (30%)</li>
-                                    <li class="list-group-item">10.0.0.1 (25%)</li>
-                                    <li class="list-group-item">172.16.0.1 (20%)</li>
-                                    <li class="list-group-item">192.168.1.1 (5%)</li>
-                                    <li class="list-group-item">1.1.1.1 (2%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější telefonní čísla
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">+420 123 456 789 (20%)</li>
-                                    <li class="list-group-item">+420 987 654 321 (18%)</li>
-                                    <li class="list-group-item">+420 555 555 555 (15%)</li>
-                                    <li class="list-group-item">+420 111 111 111 (12%)</li>
-                                    <li class="list-group-item">+420 777 777 777 (10%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Nejčastější adresy
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">Náměstí Svobody 123, Brno (20%)</li>
-                                    <li class="list-group-item">Národní třída 12, Praha (18%)</li>
-                                    <li class="list-group-item">Na Příkopě 15, Praha (15%)</li>
-                                    <li class="list-group-item">Rytířská 29, Praha (12%)</li>
-                                    <li class="list-group-item">Wenzigova 14, Brno (10%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-info mb-3">
-                            <div class="card-header bg-info text-white">
-                                Datum vytvoření souborů podle roků
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">2022 (30%)</li>
-                                    <li class="list-group-item">2021 (25%)</li>
-                                    <li class="list-group-item">2020 (20%)</li>
-                                    <li class="list-group-item">2019 (15%)</li>
-                                    <li class="list-group-item">2018 (10%)</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Stop -->
+        // set the dimensions and margins of the graph
+        const width = 450,
+            height = 450,
+            margin = 40;
 
+        // The radius of the pieplot is half the width or half the height (smallest one). I subtract a bit of margin.
+        const radius = Math.min(width, height) / 2 - margin
 
-    </div>
+        // append the svg object to the div called 'my_dataviz'
+        const svg = d3.select("#my_dataviz")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", `translate(${width / 2},${height / 2})`);
+
+        let data;
+        const url = 'stats/file-format';
+        $.ajax({
+            type: 'GET',
+            dataType: 'json',
+            url: url,
+            success: function (data) {
+                drawGraph(data)
+            },
+            error: function () {
+                alert('Error loading results.');
+            }
+        });
+
+        drawGraph = (data) => {
+            console.log(data)
+            // set the color scale
+            const color = d3.scaleOrdinal()
+                .domain(Object.keys(data))
+                .range(d3.schemeDark2);
+
+            // Compute the position of each group on the pie:
+            const pie = d3.pie()
+                .sort(null) // Do not sort group by size
+                .value(d => d[1])
+            const data_ready = pie(Object.entries(data))
+
+            // The arc generator
+            const arc = d3.arc()
+                .innerRadius(radius * 0.5)         // This is the size of the donut hole
+                .outerRadius(radius * 0.8)
+
+            // Another arc that won't be drawn. Just for labels positioning
+            const outerArc = d3.arc()
+                .innerRadius(radius * 0.9)
+                .outerRadius(radius * 0.9)
+
+            // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+            svg
+                .selectAll('allSlices')
+                .data(data_ready)
+                .join('path')
+                .attr('d', arc)
+                .attr('fill', d => color(d.data[1]))
+                .attr("stroke", "white")
+                .style("stroke-width", "2px")
+                .style("opacity", 0.7)
+
+            // Add the polylines between chart and labels:
+            svg
+                .selectAll('allPolylines')
+                .data(data_ready)
+                .join('polyline')
+                .attr("stroke", "black")
+                .style("fill", "none")
+                .attr("stroke-width", 1)
+                .attr('points', function (d) {
+                    const posA = arc.centroid(d) // line insertion in the slice
+                    const posB = outerArc.centroid(d) // line break: we use the other arc generator that has been built only for that
+                    const posC = outerArc.centroid(d); // Label position = almost the same as posB
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2 // we need the angle to see if the X position will be at the extreme right or extreme left
+                    posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1); // multiply by 1 or -1 to put it on the right or on the left
+                    return [posA, posB, posC]
+                })
+
+            // Add the polylines between chart and labels:
+            svg
+                .selectAll('allLabels')
+                .data(data_ready)
+                .join('text')
+                .text(d => d.data[0])
+                .attr('transform', function (d) {
+                    const pos = outerArc.centroid(d);
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+                    pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
+                    return `translate(${pos})`;
+                })
+                .style('text-anchor', function (d) {
+                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+                    return (midangle < Math.PI ? 'start' : 'end')
+                })
+        }
+    </script>
 {% endblock content %}

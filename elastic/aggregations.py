@@ -1,6 +1,31 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
-from elasticsearch_dsl.aggs import Terms
+from elasticsearch_dsl.aggs import Terms, A
+from .helpers import dataset_to_indices
+
+
+def get_top_files_field_values(es: Elasticsearch, datset, field):
+    indices = dataset_to_indices(es, datset, file_indices=True)
+
+    # create a Search object for the "files" index
+    s = Search(using=es, index=indices[0])
+
+    # define the aggregation
+    aggregation = A("terms", field=field, size=5)
+
+    # add the aggregation to the search object
+    s.aggs.bucket("file_types", aggregation)
+
+    # execute the search and retrieve the aggregation results
+    print(s.to_dict())
+    response = s.execute()
+
+    result = {f"{bucket.key}": bucket.doc_count for bucket in response.aggregations.file_types.buckets}
+
+    return result
+    # print the aggregation results
+    for bucket in response.aggregations.file_types.buckets:
+        print(f"{bucket.key}: {bucket.doc_count} ({bucket.doc_count / response.hits.total.value:.2%})")
 
 
 def get_top_values_for_field(es: Elasticsearch, index, type_field_name, entity_type, field_name):

@@ -40,6 +40,7 @@ def main():
         process_one_file(file_path)
         print(file_path)
 
+    return True
 
 if __name__ == '__main__':
     main()

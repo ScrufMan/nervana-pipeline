@@ -4,8 +4,8 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch.helpers import bulk
 
-from entity_recognizer import Entity
 from file_processor import File
+from entity_recognizer import Entity
 
 
 def create_index_if_not_exists(es: Elasticsearch, dataset):
@@ -23,9 +23,9 @@ def create_index_if_not_exists(es: Elasticsearch, dataset):
                 'properties': {
                     'filename': {'type': 'text'},
                     'path': {'type': 'text'},
-                    'format': {'type': 'text'},
+                    'format': {'type': 'keyword'},
                     'plaintext': {'type': 'text'},
-                    'language': {'type': 'text'},
+                    'language': {'type': 'keyword'},
                     'author': {'type': 'text'},
                     'timestamp': {'type': 'date'},
                 }

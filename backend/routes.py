@@ -1,7 +1,8 @@
 import json
 
-from flask import render_template, request, jsonify
-from elastic import get_all_datasets, find_entities, get_all_files, get_file, get_top_values_for_field
+from flask import render_template, request
+from elastic import get_all_datasets, find_entities, get_all_files, get_file, get_top_values_for_field, \
+    get_top_files_field_values
 
 from backend import app, es
 from backend.forms import SearchForm
@@ -68,8 +69,13 @@ def show_file(dataset, file_id):
 @app.route("/stats")
 def stats():
     datasets = get_all_datasets(es)
-    get_top_values_for_field(es, "zachyt_1", "entity_type", "person", "value.keyword")
     return render_template("stats.html", datasets=datasets)
+
+
+@app.route("/stats/file-format")
+def file_formats():
+    data = get_top_files_field_values(es, "_all", "format")
+    return json.dumps(data)
 
 
 @app.route("/email")
