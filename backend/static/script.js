@@ -1,6 +1,6 @@
 $(document).ready(function () {
     // don't close dropdown menu when clicking on label
-    $('.dropdown-menu').on('click', 'label, button', function (e) {
+    $('.dropdown-menu').on('click', function (e) {
         e.stopPropagation();
     });
 

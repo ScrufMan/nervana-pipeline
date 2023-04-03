@@ -63,12 +63,12 @@ def create_entities_index(es, dataset):
                 "tokenizer": "standard",
                 "filter": ["english_stop", "lowercase", "english_stemmer", "asciifolding_custom"]
             },
-            "czech_lematized": {
+            "czech_lemmatized": {
                 "type": "custom",
                 "tokenizer": "standard",
                 "filter": ["lowercase", "asciifolding_custom"]
             },
-            "english_lematized": {
+            "english_lemmatized": {
                 "type": "custom",
                 "tokenizer": "standard",
                 "filter": ["lowercase", "asciifolding_custom"]
@@ -89,13 +89,13 @@ def create_entities_index(es, dataset):
                     }
                 }
             },
-            "lematized": {
+            "lemmatized": {
                 "type": "text",
-                "analyzer": "czech_lematized",
+                "analyzer": "czech_lemmatized",
                 "fields": {
                     "english": {
                         "type": "text",
-                        "analyzer": "english_lematized"
+                        "analyzer": "english_lemmatized"
                     }
                 }
             },

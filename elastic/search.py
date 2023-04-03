@@ -1,40 +1,122 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
 from .helpers import dataset_to_indices
+from entity_recognizer.post_processor import lemmatize_text
+
+def handle_regexp(search_term):
+    return [
+        {
+            "regexp": {
+                "value": search_term[2:]
+            }
+        },
+        {
+            "regexp": {
+                "lemmatized": search_term[2:]
+            }
+        }
+    ]
+
+
+def handle_exact(search_term):
+    exact_term = search_term[1:-1]
+    return [
+        {
+            "term": {
+                "value.keyword": exact_term
+            }
+        },
+        {
+            "term": {
+                "lemmatized.keyword": exact_term
+            }
+        }
+    ]
+
+
+def handle_normal(search_term, lemmatized_search_term):
+    return [
+        {
+            "multi_match": {
+                "query": search_term,
+                "fields": ["value", "value.english"]
+            }
+        },
+        {
+            "multi_match": {
+                "query": lemmatized_search_term,
+                "fields": ["lemmatized", "lemmatized.english"]
+            }
+        },
+        {
+            "fuzzy": {
+                "value": {
+                    "value": search_term,
+                    "fuzziness": "AUTO"
+                }
+            }
+        },
+        {
+            "fuzzy": {
+                "lemmatized": {
+                    "value": lemmatized_search_term,
+                    "fuzziness": "AUTO"
+                }
+            }
+        },
+        {
+            "fuzzy": {
+                "value.english": {
+                    "value": search_term,
+                    "fuzziness": "AUTO"
+                }
+            }
+        },
+        {
+            "fuzzy": {
+                "lemmatized.english": {
+                    "value": lemmatized_search_term,
+                    "fuzziness": "AUTO"
+                }
+            }
+        }
+    ]
 
 
 def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, page_size):
+    lemmatized_search_terms = [lemmatize_text(term) for term in search_terms]
+
     indices = dataset_to_indices(es, dataset, file_indices=False)
 
-    s = Search(using=es, index=indices)
+    search = Search(using=es, index=indices)
 
     search_from = (page - 1) * page_size
-    s = s[search_from:search_from + page_size]
+    search = search[search_from:search_from + page_size]
 
-    # create a query to match documents with any of the given entity types
-    entity_type_query = Q('terms', entity_type=entity_types)
-
-    # create a query to match entites with any of the given values
-    values_query = None
-    for search_term in search_terms:
-        if search_term.startswith('"') and search_term.endswith('"'):
-            values_query_part = Q('match', value=search_term[1:-1])
-        elif search_term.startswith('r:'):
-            values_query_part = Q('query_string', query=search_term[2:], fuzziness='AUTO', default_field='value')
+    # Loop through search_terms and create a search query for each term
+    search_clauses = []
+    for search_term, lemmatized_search_term in zip(search_terms, lemmatized_search_terms):
+        if search_term.startswith('r:'):
+            search_clauses.extend(handle_regexp(search_term))
+        elif search_term.startswith('"') and search_term.endswith('"'):
+            search_clauses.extend(handle_exact(search_term))
         else:
-            values_query_part = Q('fuzzy',
-                                  lemmatized={'value': search_term, 'fuzziness': 'AUTO', 'transpositions': True})
+            search_clauses.extend(handle_normal(search_term, lemmatized_search_term))
 
-        if values_query is None:
-            values_query = values_query_part
-        else:
-            values_query |= values_query_part
+    search = search.query(
+        "bool",
+        should=search_clauses,
+        filter=[
+            {
+                "terms": {
+                    "entity_type": entity_types
+                }
+            }
+        ],
+        minimum_should_match=1
+    )
 
-    # combine the two queries with an "and" operator
-    combined_query = entity_type_query & values_query
-
-    # execute the search
-    response = s.query(values_query).execute()
+    response = search.execute()
 
     return response
 
