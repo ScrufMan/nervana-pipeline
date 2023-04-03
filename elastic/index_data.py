@@ -8,62 +8,120 @@ from file_processor import File
 from entity_recognizer import Entity
 
 
-def create_index_if_not_exists(es: Elasticsearch, dataset):
-    # Check if index exists
-    try:
-        es.indices.get(index=f"{dataset}-files")
-        return
-    except NotFoundError:
-        # If index does not exist, create it
-
-        # create index for files
-        file_index_name = f'{dataset}-files'
-        file_mappings = {
-            'mappings': {
-                'properties': {
-                    'filename': {'type': 'text'},
-                    'path': {'type': 'text'},
-                    'format': {'type': 'keyword'},
-                    'plaintext': {'type': 'text'},
-                    'language': {'type': 'keyword'},
-                    'author': {'type': 'text'},
-                    'timestamp': {'type': 'date'},
-                }
+def create_files_index(es, dataset):
+    file_index_name = f'{dataset}-files'
+    file_mappings = {
+        'mappings': {
+            'properties': {
+                'filename': {'type': 'text'},
+                'path': {'type': 'text'},
+                'format': {'type': 'keyword'},
+                'plaintext': {'type': 'text'},
+                'language': {'type': 'keyword'},
+                'author': {'type': 'text'},
+                'timestamp': {'type': 'date'},
             }
         }
-        es.indices.create(index=file_index_name, body=file_mappings)
+    }
+    es.indices.create(index=file_index_name, body=file_mappings)
 
-        # create index for entities
-        entity_index_name = f'{dataset}-entities'
-        entity_settings = {
-            "settings": {
-                "analysis": {
-                    "analyzer": {
-                        "lemmatized_lowercase": {
-                            "type": "custom",
-                            "tokenizer": "standard",
-                            "filter": [
-                                "lowercase",
-                                "asciifolding"
-                            ]
-                        }
+
+def create_entities_index(es, dataset):
+    entity_index_name = f'{dataset}-entities'
+
+    analysis = {
+        "filter": {
+            "asciifolding_custom": {
+                "type": "asciifolding",
+                "preserve_original": True
+            },
+            "czech_stop": {
+                "type": "stop",
+                "stopwords": "_czech_"
+            },
+            "czech_stemmer": {
+                "type": "stemmer",
+                "language": "czech"
+            },
+            "english_stop": {
+                "type": "stop",
+                "stopwords": "_english_"
+            },
+            "english_stemmer": {
+                "type": "stemmer",
+                "language": "english"
+            }
+        },
+        "analyzer": {
+            "czech_value": {
+                "type": "custom",
+                "tokenizer": "standard",
+                "filter": ["czech_stop", "lowercase", "czech_stemmer", "asciifolding_custom"]
+            },
+            "english_value": {
+                "type": "custom",
+                "tokenizer": "standard",
+                "filter": ["english_stop", "lowercase", "english_stemmer", "asciifolding_custom"]
+            },
+            "czech_lematized": {
+                "type": "custom",
+                "tokenizer": "standard",
+                "filter": ["lowercase", "asciifolding_custom"]
+            },
+            "english_lematized": {
+                "type": "custom",
+                "tokenizer": "standard",
+                "filter": ["lowercase", "asciifolding_custom"]
+            }
+        }
+    }
+
+    entity_mappings = {
+        "properties": {
+            "entity_type": {"type": "keyword"},
+            "value": {
+                "type": "text",
+                "analyzer": "czech_value",
+                "fields": {
+                    "english": {
+                        "type": "text",
+                        "analyzer": "english_value"
                     }
                 }
             },
-            "mappings": {
-                "properties": {
-                    "entity_type": {"type": "text"},
-                    "value": {"type": "text"},
-                    "lemmatized": {
+            "lematized": {
+                "type": "text",
+                "analyzer": "czech_lematized",
+                "fields": {
+                    "english": {
                         "type": "text",
-                        "analyzer": "lemmatized_lowercase"
-                    },
-                    "context": {"type": "text"},
-                    "file_id": {"type": "keyword"}
+                        "analyzer": "english_lematized"
+                    }
                 }
-            }
+            },
+            "context": {"type": "text"},
+            "file_id": {"type": "keyword"}
         }
-        es.indices.create(index=entity_index_name, body=entity_settings)
+
+    }
+    settings = {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "analysis": analysis
+    }
+
+    es.indices.create(index=entity_index_name,
+                      body={
+                          "settings": settings,
+                          "mappings": entity_mappings
+                      })
+
+
+def create_index_if_not_exists(es: Elasticsearch, dataset):
+    # Check if index exists
+    if not es.indices.exists(index=f"{dataset}-files"):
+        create_files_index(es, dataset)
+        create_entities_index(es, dataset)
 
 
 def index_file(es: Elasticsearch, dataset, file: File):
