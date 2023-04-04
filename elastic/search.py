@@ -3,16 +3,17 @@ from elasticsearch_dsl import Search, Q
 from .helpers import dataset_to_indices
 from entity_recognizer.post_processor import lemmatize_text
 
+
 def handle_regexp(search_term):
     return [
         {
             "regexp": {
-                "value": search_term[2:]
+                "value.keyword": search_term[2:]
             }
         },
         {
             "regexp": {
-                "lemmatized": search_term[2:]
+                "lemmatized.keyword": search_term[2:]
             }
         }
     ]
@@ -34,18 +35,36 @@ def handle_exact(search_term):
     ]
 
 
-def handle_normal(search_term, lemmatized_search_term):
+def handle_normal(search_term):
+    if search_term == "*":
+        return [
+            {
+                "match_all": {}
+            }
+        ]
+
+    lemmatized_search_term = lemmatize_text(search_term)
     return [
         {
-            "multi_match": {
-                "query": search_term,
-                "fields": ["value", "value.english"]
+            "function_score": {
+                "query": {
+                    "multi_match": {
+                        "query": search_term,
+                        "fields": ["value", "value.english"]
+                    }
+                },
+                "boost": 2
             }
         },
         {
-            "multi_match": {
-                "query": lemmatized_search_term,
-                "fields": ["lemmatized", "lemmatized.english"]
+            "function_score": {
+                "query": {
+                    "multi_match": {
+                        "query": lemmatized_search_term,
+                        "fields": ["lemmatized", "lemmatized.english"]
+                    }
+                },
+                "boost": 2
             }
         },
         {
@@ -84,8 +103,6 @@ def handle_normal(search_term, lemmatized_search_term):
 
 
 def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, page_size):
-    lemmatized_search_terms = [lemmatize_text(term) for term in search_terms]
-
     indices = dataset_to_indices(es, dataset, file_indices=False)
 
     search = Search(using=es, index=indices)
@@ -95,13 +112,13 @@ def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, 
 
     # Loop through search_terms and create a search query for each term
     search_clauses = []
-    for search_term, lemmatized_search_term in zip(search_terms, lemmatized_search_terms):
+    for search_term in search_terms:
         if search_term.startswith('r:'):
             search_clauses.extend(handle_regexp(search_term))
         elif search_term.startswith('"') and search_term.endswith('"'):
             search_clauses.extend(handle_exact(search_term))
         else:
-            search_clauses.extend(handle_normal(search_term, lemmatized_search_term))
+            search_clauses.extend(handle_normal(search_term))
 
     search = search.query(
         "bool",

@@ -66,12 +66,12 @@ def create_entities_index(es, dataset):
             "czech_lemmatized": {
                 "type": "custom",
                 "tokenizer": "standard",
-                "filter": ["lowercase", "asciifolding_custom"]
+                "filter": ["czech_stop", "lowercase", "asciifolding_custom"]
             },
             "english_lemmatized": {
                 "type": "custom",
                 "tokenizer": "standard",
-                "filter": ["lowercase", "asciifolding_custom"]
+                "filter": ["english_stop", "lowercase", "asciifolding_custom"]
             }
         }
     }
@@ -86,6 +86,9 @@ def create_entities_index(es, dataset):
                     "english": {
                         "type": "text",
                         "analyzer": "english_value"
+                    },
+                    "keyword": {
+                        "type": "keyword"
                     }
                 }
             },
@@ -96,14 +99,17 @@ def create_entities_index(es, dataset):
                     "english": {
                         "type": "text",
                         "analyzer": "english_lemmatized"
+                    },
+                    "keyword": {
+                        "type": "keyword"
                     }
                 }
             },
             "context": {"type": "text"},
             "file_id": {"type": "keyword"}
         }
-
     }
+
     settings = {
         "number_of_shards": 1,
         "number_of_replicas": 1,
