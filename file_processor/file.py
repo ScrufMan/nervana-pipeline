@@ -17,6 +17,7 @@ class File:
         self.path = self.path_obj.__str__()
         self.filename = self.path_obj.name
         self.format = get_file_format(path)
+        self.original_plaintext = ""
         self.plaintext = ""
         self.lang = None
         self.author = None
@@ -31,6 +32,7 @@ class File:
                 return False
 
             self.plaintext = tika_response["content"]
+            self.original_plaintext = tika_response["content"]
             self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
             self.author = tika_response["metadata"].get("Author", None)
             self.lang = lang_detetctor.detect_language_of(self.plaintext)
@@ -49,7 +51,7 @@ class File:
             "filename": self.filename,
             "path": self.path,
             "format": self.format,
-            "plaintext": self.plaintext,
+            "plaintext": self.original_plaintext,
             "language": self.lang.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp

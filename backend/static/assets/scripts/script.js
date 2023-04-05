@@ -141,6 +141,18 @@ function loadResults(formData, url) {
         data: formData,
         success: function (data) {
             $('.results').html(data.results);
+            $('.file-open-link').click(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    type: 'GET',
+                    url: $(this).attr('href'),
+                    success: function (response) {
+                        $('.modal-title').text(response.path);
+                        $('#file_contents_pre').text(response.plaintext);
+                        $('#file_contents_modal').modal('show');
+                    }
+                });
+            });
         },
         error: function () {
             alert('Error loading results.');

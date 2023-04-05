@@ -34,4 +34,6 @@ class SearchForm(FlaskForm):
                                                       option_widget=widgets.CheckboxInput()),
                                   min_entries=1)
 
+    results_per_page = SelectField("Výsledků na stránku", validators=[DataRequired()], choices=[(10, 10), (20, 20), (50, 50)], default=10)
+
     submit = SubmitField("Hledat")

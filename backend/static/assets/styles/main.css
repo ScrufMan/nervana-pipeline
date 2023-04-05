@@ -1,3 +1,4 @@
+@import url('misc/_reset.css');
 @import url('misc/_typography.css');
 
 /* Tmavý režim */
@@ -86,23 +87,33 @@ form label {
     justify-content: center;
 }
 
-nav .page-link {
-    color: #007bff;
-    border-color: #007bff;
+h1 {
+    font-weight: bold;
 }
 
-nav .page-link:hover {
-    background-color: #007bff;
-    color: #fff;
+.nav-link {
+    color: #ffffff !important;
+    font-weight: bold;
 }
 
-nav .page-item.active .page-link {
-    background-color: #007bff;
-    border-color: #007bff;
+.nav-link:hover {
+    color: #999999 !important;
 }
 
 .dropdown-menu {
     min-width: 208px;
+}
+
+#file_contents_modal .modal-body {
+    padding: 0;
+}
+
+#file_contents_pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+    max-height: 700px;
+    padding: 10px;
 }
 
 /* Pata stránky */

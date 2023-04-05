@@ -1,17 +1,14 @@
 import json
 
-from flask import render_template, request
+from flask import render_template, request, jsonify
 from elastic import get_all_datasets, find_entities, get_all_files, get_file, get_top_values_for_field, \
     get_top_files_field_values
 
 from backend import app, es
 from backend.forms import SearchForm
 from backend.models import entities_from_hits
-from tika import parser
 from flask_paginate import Pagination
 from email_analyzer import run_analysis
-
-PAGE_SIZE = 10
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -28,8 +25,9 @@ def search():
     dataset = form.dataset.data
     search_terms = form.search_terms.data
     entity_types_list = form.entity_types_list.data
+    results_per_page = int(form.results_per_page.data)
 
-    hits = find_entities(es, dataset, search_terms, entity_types_list, page, PAGE_SIZE)
+    hits = find_entities(es, dataset, search_terms, entity_types_list, page, results_per_page)
     total_hits = hits.hits.total.value
 
     file_hits = get_all_files(es, dataset)
@@ -38,32 +36,26 @@ def search():
     pagination = Pagination(
         page=page,
         total=total_hits,
-        per_page=PAGE_SIZE,
+        per_page=results_per_page,
         css_framework='bootstrap4',
         link_attr={'class': 'my-link-class'}
     )
 
     results_html = render_template('search-results.html', results=results, pagination=pagination,
-                                   total_hits=total_hits)
+                                   total_hits=total_hits, form=form)
 
     return {'results': results_html}
 
 
-@app.route("/file/<string:dataset>/<string:file_id>")
-def show_file(dataset, file_id):
+@app.route("/file/<string:index>/<string:file_id>")
+def show_file(index, file_id):
+    dataset = index.split("-entities")[0]
     file = get_file(es, dataset, file_id)
+
     path = file["path"]
+    plaintext = file["plaintext"]
 
-    tika_response = parser.from_file(path)
-
-    if tika_response["status"] != 200:
-        return f"Error extracting plaintext from file {path}"
-
-    plaintext = tika_response["content"]
-    plaintext = plaintext.strip()
-
-    return render_template("file.html", path=path, plaintext=plaintext)
-
+    return jsonify({"path": path, "plaintext": plaintext})
 
 @app.route("/")
 @app.route("/stats")

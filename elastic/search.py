@@ -161,7 +161,7 @@ def get_file(es, dataset, file_id):
     index = f"{dataset}-files"
 
     try:
-        res = es.get(index=index, id=file_id)
+        res = es.get(index=index, id=file_id)["_source"]
 
         return res
     except Exception as e:
