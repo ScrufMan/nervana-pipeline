@@ -4,12 +4,21 @@ $(document).ready(function () {
         e.stopPropagation();
     });
 
-    $('#check-all').click(function () {
-        $('input[name=\'entity_types\']').prop('checked', true);
+    $('.check-all').on('click', function () {
+        // Get the parent of the clicked element and its previous sibling
+        const previousSibling = $(this).parent().prev();
+
+        // For each input inside the previous sibling, set checked
+        previousSibling.find('input[type="checkbox"]').prop('checked', true);
     });
 
-    $('#uncheck-all').click(function () {
-        $('input[name=\'entity_types\']').prop('checked', false);
+    // Add a click event listener to all elements with the class .uncheck-all
+    $('.uncheck-all').on('click', function () {
+        // Get the parent of the clicked element and its previous sibling
+        const previousSibling = $(this).parent().prev();
+
+        // For each input inside the previous sibling, set unchecked
+        previousSibling.find('input[type="checkbox"]').prop('checked', false);
     });
 
     let originalFormData;
@@ -45,12 +54,13 @@ $(document).ready(function () {
     });
 });
 
+
 let nextFieldIdx = 1;
 
 function addSearchCondition() {
 
     const inputGroup = document.createElement('div');
-    inputGroup.classList.add('input-group', 'col-md-9', 'mb-3');
+    inputGroup.classList.add('input-group', 'col-md-10', 'mb-3');
 
     const prependDiv = document.createElement('div');
     prependDiv.classList.add('input-group-prepend');
@@ -69,14 +79,54 @@ function addSearchCondition() {
     input.removeAttribute('id');
     input.name = `search_terms-${nextFieldIdx}`;
     input.value = '';
+    input.classList.add('rounded-right');
+
+    const entityTypesMenuDefault = document.getElementById('entityTypesMenu')
+    const entityTypesMenu = entityTypesMenuDefault.cloneNode(true)
+    const inputs = entityTypesMenu.querySelectorAll('input');
+
+
+    // add event listeners
+    $(entityTypesMenu).find('.dropdown-menu').on('click', function (e) {
+        e.stopPropagation();
+    });
+
+    $(entityTypesMenu).find('.check-all').on('click', function () {
+        // Get the parent of the clicked element and its previous sibling
+        const previousSibling = $(this).parent().prev();
+
+        // For each input inside the previous sibling, set checked
+        previousSibling.find('input[type="checkbox"]').prop('checked', true);
+    });
+
+    // Add a click event listener to all elements with the class .uncheck-all
+    $(entityTypesMenu).find('.uncheck-all').on('click', function () {
+        // Get the parent of the clicked element and its previous sibling
+        const previousSibling = $(this).parent().prev();
+
+        // For each input inside the previous sibling, set unchecked
+        previousSibling.find('input[type="checkbox"]').prop('checked', false);
+    });
+
+    inputs.forEach(input => {
+        const name = input.getAttribute('name');
+        const id = input.getAttribute('id');
+        const newName = name.replace(/entity_types_list-\d+/g, `entity_types_list-${nextFieldIdx}`);
+        const newId = id.replace(/entity_types_list-\d+-(\d+)/g, `entity_types_list-${nextFieldIdx}-$1`);
+        input.setAttribute('name', newName);
+        console.log(newName)
+        console.log(newId)
+        input.setAttribute('id', newId);
+    });
 
     const appendDiv = document.createElement('div');
-    appendDiv.classList.add('input-group-append');
+    appendDiv.classList.add('input-group-append', 'ml-2');
 
     prependDiv.appendChild(button);
     inputGroup.appendChild(prependDiv);
     inputGroup.appendChild(input);
     inputGroup.appendChild(appendDiv);
+    appendDiv.appendChild(entityTypesMenu)
 
     const additionalSearchConditions = document.getElementById('additional-search-conditions');
     additionalSearchConditions.appendChild(inputGroup);
@@ -101,7 +151,7 @@ function loadResults(formData, url) {
 function checkSearchTerm(input) {
     // Get the input value
     let value = input.value;
-
+    input.setCustomValidity('');
     // Check the value and set the background color accordingly
     if (value.startsWith('r:')) {
         // Get the regular expression entered after "r:"
@@ -111,7 +161,6 @@ function checkSearchTerm(input) {
         try {
             let regex = new RegExp(regexStr);
             input.style.backgroundColor = '#9ef7aa';
-            input.setCustomValidity('');
         } catch (e) {
             input.style.backgroundColor = '#fc9f9f';
             input.setCustomValidity('Regulární výraz není správný');

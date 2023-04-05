@@ -1,4 +1,4 @@
-CONTEXT_LENGTH = 140
+CONTEXT_LENGTH = 180
 
 def get_context(value, parent):
     start_idx = parent.find(value)

@@ -27,9 +27,9 @@ def search():
 
     dataset = form.dataset.data
     search_terms = form.search_terms.data
-    entity_types = form.entity_types.data
+    entity_types_list = form.entity_types_list.data
 
-    hits = find_entities(es, dataset, search_terms, entity_types, page, PAGE_SIZE)
+    hits = find_entities(es, dataset, search_terms, entity_types_list, page, PAGE_SIZE)
     total_hits = hits.hits.total.value
 
     file_hits = get_all_files(es, dataset)

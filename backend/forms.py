@@ -25,9 +25,13 @@ class SearchForm(FlaskForm):
                                          render_kw={"placeholder": "Zadejte hledaný výraz",
                                                     "oninput": "checkSearchTerm(this)"}),
                              min_entries=1)
+
     dataset = SelectField('Datová sada:', validators=[DataRequired()],
                           choices=[("_all", "Všechny")] + get_all_datasets(es))
-    entity_types = SelectMultipleField("Typ:", choices=entity_types_choices,
-                                       widget=widgets.Select(),
-                                       option_widget=widgets.CheckboxInput())
+
+    entity_types_list = FieldList(SelectMultipleField("Typ", choices=entity_types_choices,
+                                                      widget=widgets.Select(),
+                                                      option_widget=widgets.CheckboxInput()),
+                                  min_entries=1)
+
     submit = SubmitField("Hledat")

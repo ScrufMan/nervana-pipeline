@@ -1,6 +1,4 @@
-.container {
-    max-width: 75vw;
-}
+@import url('misc/_typography.css');
 
 /* Tmavý režim */
 body.dark-mode {
@@ -23,9 +21,12 @@ header {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.navbar-brand {
+h1 {
     font-size: 1.5rem;
-    font-weight: bold;
+}
+
+h5 {
+    font-size: 1.3rem;
 }
 
 /* Formulář pro vyhledávání */
@@ -98,6 +99,10 @@ nav .page-link:hover {
 nav .page-item.active .page-link {
     background-color: #007bff;
     border-color: #007bff;
+}
+
+.dropdown-menu {
+    min-width: 208px;
 }
 
 /* Pata stránky */

@@ -44,6 +44,7 @@ def handle_normal(search_term):
         ]
 
     lemmatized_search_term = lemmatize_text(search_term)
+
     return [
         {
             "function_score": {
@@ -102,7 +103,7 @@ def handle_normal(search_term):
     ]
 
 
-def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, page_size):
+def find_entities(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
     indices = dataset_to_indices(es, dataset, file_indices=False)
 
     search = Search(using=es, index=indices)
@@ -110,26 +111,34 @@ def find_entities(es: Elasticsearch, dataset, search_terms, entity_types, page, 
     search_from = (page - 1) * page_size
     search = search[search_from:search_from + page_size]
 
-    # Loop through search_terms and create a search query for each term
-    search_clauses = []
-    for search_term in search_terms:
+    # Loop through search_terms and entity_types and create a search query for each term
+    queries = []
+    for search_term, entity_types in zip(search_terms, entity_types_list):
         if search_term.startswith('r:'):
-            search_clauses.extend(handle_regexp(search_term))
+            clause = handle_regexp(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):
-            search_clauses.extend(handle_exact(search_term))
+            clause = handle_exact(search_term)
         else:
-            search_clauses.extend(handle_normal(search_term))
+            clause = handle_normal(search_term)
+
+        query = Q(
+            "bool",
+            should=clause,
+            filter=[
+                {
+                    "terms": {
+                        "entity_type": entity_types
+                    }
+                }
+            ],
+            minimum_should_match=1
+        )
+
+        queries.append(query)
 
     search = search.query(
         "bool",
-        should=search_clauses,
-        filter=[
-            {
-                "terms": {
-                    "entity_type": entity_types
-                }
-            }
-        ],
+        should=queries,
         minimum_should_match=1
     )
 

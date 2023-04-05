@@ -14,7 +14,7 @@
     </style>
     <h2>Graf pro dataset Emailovej komunikace</h2>
     <svg width="1000" height="1000"></svg>
-    <script src="{{ url_for('static', filename='d3network.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/scripts/d3network.js') }}"></script>
     <script>
         var graphData = {{ data|safe }};
         d3network(graphData);
