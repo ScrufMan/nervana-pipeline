@@ -58,84 +58,65 @@ $(document).ready(function () {
 let nextFieldIdx = 1;
 
 function addSearchCondition() {
-    const row = document.createElement('div');
-    row.classList.add('form-row');
-    row.classList.add('justify-content-between');
-    row.classList.add('align-items-center');
+    // Creating a new row element with classes "form-row", "justify-content-between", and "align-items-center"
+    const row = $('<div></div>').addClass('form-row justify-content-between align-items-center');
 
-    const searchGroup = document.createElement('div');
-    searchGroup.classList.add('input-group', 'col-md-7');
+    // Creating a new search group element with classes "input-group" and "col-md-7"
+    const searchGroup = $('<div></div>').addClass('input-group col-md-7');
 
-    const prependDiv = document.createElement('div');
-    prependDiv.classList.add('input-group-prepend');
-    prependDiv.classList.add('d-block');
+    // Creating a new prepend div element with classes "input-group-prepend" and "d-block"
+    const prependDiv = $('<div></div>').addClass('input-group-prepend d-block');
 
-    const button = document.createElement('button');
-    button.classList.add('btn', 'btn-outline-secondary');
-    button.type = 'button';
-    button.onclick = button.onclick = () => {
+    // Creating a new button element with classes "btn" and "btn-outline-secondary", setting its type to "button", and adding an onclick event handler
+    const button = $('<button></button>').addClass('btn btn-outline-secondary').attr('type', 'button').click(() => {
         row.remove();
         nextFieldIdx--;
-    };
-    button.innerHTML = '–';
+    }).html('–');
 
-    const input = document.getElementById('search_terms-0').cloneNode(true);
-    input.name = `search_terms-${nextFieldIdx}`;
-    input.id = `search_terms-${nextFieldIdx}`;
-    input.value = '';
-    input.classList.add('rounded-right');
-    input.removeAttribute('style');
-    const entityTypesGroup = document.querySelector('#entityTypesGroup').cloneNode(true);
+    // Getting the default input element with id "search_terms-0", cloning it, and modifying its attributes
+    const input = $('#search_terms-0').clone().removeAttr('style').attr({
+        'name': `search_terms-${nextFieldIdx}`,
+        'id': `search_terms-${nextFieldIdx}`,
+        'value': '',
+    }).addClass('rounded-right');
 
-    entityTypesGroup.classList.remove('mt-3');
+    // Getting the default entity types group element with id "entityTypesGroup", cloning it, and modifying its attributes
+    const entityTypesGroup = $('#entityTypesGroup').clone().removeClass('mt-3');
 
-    $(entityTypesGroup).find('.dropdown-menu').on('click', function (e) {
+    // Adding event listeners to the entity types group's dropdown-menu and check-all elements
+    entityTypesGroup.find('.dropdown-menu').on('click', function (e) {
         e.stopPropagation();
     });
-
-    $(entityTypesGroup).find('.check-all').on('click', function () {
-        // Get the parent of the clicked element and its previous sibling
+    entityTypesGroup.find('.check-all').on('click', function () {
         const previousSibling = $(this).parent().prev();
-
-        // For each input inside the previous sibling, set checked
         previousSibling.find('input[type="checkbox"]').prop('checked', true);
     });
 
-    // Add a click event listener to all elements with the class .uncheck-all
-    $(entityTypesGroup).find('.uncheck-all').on('click', function () {
-        // Get the parent of the clicked element and its previous sibling
+    // Adding an event listener to all elements with the class .uncheck-all
+    entityTypesGroup.find('.uncheck-all').on('click', function () {
         const previousSibling = $(this).parent().prev();
-
-        // For each input inside the previous sibling, set unchecked
         previousSibling.find('input[type="checkbox"]').prop('checked', false);
     });
 
-    const checkboxes = entityTypesGroup.querySelectorAll('input');
-
-    checkboxes.forEach(checkbox => {
-        const name = checkbox.getAttribute('name');
-        const id = checkbox.getAttribute('id');
+    // Modifying the cloned entity types group's input elements' attributes
+    entityTypesGroup.find('input').each(function () {
+        const name = $(this).attr('name');
+        const id = $(this).attr('id');
         const newName = name.replace(/entity_types_list-\d+/g, `entity_types_list-${nextFieldIdx}`);
         const newId = id.replace(/entity_types_list-\d+-(\d+)/g, `entity_types_list-${nextFieldIdx}-$1`);
-        checkbox.setAttribute('name', newName);
-        checkbox.setAttribute('id', newId);
+        $(this).attr('name', newName).attr('id', newId);
 
-        const label = checkbox.nextElementSibling;
-        label.setAttribute('for', newId);
+        const label = $(this).next('label');
+        label.attr('for', newId);
     });
 
+    // Appending the button and input elements to the search group element, and then appending the search group and entity types group elements to the row element
+    prependDiv.append(button);
+    searchGroup.append(prependDiv, input);
+    row.append(searchGroup, entityTypesGroup);
 
-    prependDiv.appendChild(button);
-    searchGroup.appendChild(prependDiv);
-    searchGroup.appendChild(input);
-
-    row.appendChild(searchGroup);
-    row.appendChild(entityTypesGroup);
-
-    const additionalSearchConditions = document.getElementById('additional-search-conditions');
-
-    additionalSearchConditions.appendChild(row);
-
+    // Appending the row element to the "additional-search-conditions" element and incrementing the "nextFieldIdx" variable
+    $('#additional-search-conditions').append(row);
     nextFieldIdx++;
 }
 
