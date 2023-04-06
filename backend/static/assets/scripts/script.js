@@ -58,40 +58,42 @@ $(document).ready(function () {
 let nextFieldIdx = 1;
 
 function addSearchCondition() {
+    const row = document.createElement('div');
+    row.classList.add('form-row');
+    row.classList.add('justify-content-between');
+    row.classList.add('align-items-center');
 
-    const inputGroup = document.createElement('div');
-    inputGroup.classList.add('input-group', 'col-md-10', 'mb-3');
+    const searchGroup = document.createElement('div');
+    searchGroup.classList.add('input-group', 'col-md-7');
 
     const prependDiv = document.createElement('div');
     prependDiv.classList.add('input-group-prepend');
+    prependDiv.classList.add('d-block');
 
     const button = document.createElement('button');
     button.classList.add('btn', 'btn-outline-secondary');
     button.type = 'button';
     button.onclick = button.onclick = () => {
-        inputGroup.remove();
+        row.remove();
         nextFieldIdx--;
     };
     button.innerHTML = '–';
 
-    const defaultInput = document.getElementById('search_terms-0');
-    const input = defaultInput.cloneNode(true);
-    input.removeAttribute('id');
+    const input = document.getElementById('search_terms-0').cloneNode(true);
     input.name = `search_terms-${nextFieldIdx}`;
+    input.id = `search_terms-${nextFieldIdx}`;
     input.value = '';
     input.classList.add('rounded-right');
+    input.removeAttribute('style');
+    const entityTypesGroup = document.querySelector('#entityTypesGroup').cloneNode(true);
 
-    const entityTypesMenuDefault = document.getElementById('entityTypesMenu')
-    const entityTypesMenu = entityTypesMenuDefault.cloneNode(true)
-    const inputs = entityTypesMenu.querySelectorAll('input');
+    entityTypesGroup.classList.remove('mt-3');
 
-
-    // add event listeners
-    $(entityTypesMenu).find('.dropdown-menu').on('click', function (e) {
+    $(entityTypesGroup).find('.dropdown-menu').on('click', function (e) {
         e.stopPropagation();
     });
 
-    $(entityTypesMenu).find('.check-all').on('click', function () {
+    $(entityTypesGroup).find('.check-all').on('click', function () {
         // Get the parent of the clicked element and its previous sibling
         const previousSibling = $(this).parent().prev();
 
@@ -100,7 +102,7 @@ function addSearchCondition() {
     });
 
     // Add a click event listener to all elements with the class .uncheck-all
-    $(entityTypesMenu).find('.uncheck-all').on('click', function () {
+    $(entityTypesGroup).find('.uncheck-all').on('click', function () {
         // Get the parent of the clicked element and its previous sibling
         const previousSibling = $(this).parent().prev();
 
@@ -108,28 +110,31 @@ function addSearchCondition() {
         previousSibling.find('input[type="checkbox"]').prop('checked', false);
     });
 
-    inputs.forEach(input => {
-        const name = input.getAttribute('name');
-        const id = input.getAttribute('id');
+    const checkboxes = entityTypesGroup.querySelectorAll('input');
+
+    checkboxes.forEach(checkbox => {
+        const name = checkbox.getAttribute('name');
+        const id = checkbox.getAttribute('id');
         const newName = name.replace(/entity_types_list-\d+/g, `entity_types_list-${nextFieldIdx}`);
         const newId = id.replace(/entity_types_list-\d+-(\d+)/g, `entity_types_list-${nextFieldIdx}-$1`);
-        input.setAttribute('name', newName);
-        console.log(newName)
-        console.log(newId)
-        input.setAttribute('id', newId);
+        checkbox.setAttribute('name', newName);
+        checkbox.setAttribute('id', newId);
+
+        const label = checkbox.nextElementSibling;
+        label.setAttribute('for', newId);
     });
 
-    const appendDiv = document.createElement('div');
-    appendDiv.classList.add('input-group-append', 'ml-2');
 
     prependDiv.appendChild(button);
-    inputGroup.appendChild(prependDiv);
-    inputGroup.appendChild(input);
-    inputGroup.appendChild(appendDiv);
-    appendDiv.appendChild(entityTypesMenu)
+    searchGroup.appendChild(prependDiv);
+    searchGroup.appendChild(input);
+
+    row.appendChild(searchGroup);
+    row.appendChild(entityTypesGroup);
 
     const additionalSearchConditions = document.getElementById('additional-search-conditions');
-    additionalSearchConditions.appendChild(inputGroup);
+
+    additionalSearchConditions.appendChild(row);
 
     nextFieldIdx++;
 }

@@ -29,7 +29,7 @@ class SearchForm(FlaskForm):
     dataset = SelectField('Datová sada:', validators=[DataRequired()],
                           choices=[("_all", "Všechny")] + get_all_datasets(es))
 
-    entity_types_list = FieldList(SelectMultipleField("Typ", choices=entity_types_choices,
+    entity_types_list = FieldList(SelectMultipleField("Typ entity", choices=entity_types_choices,
                                                       widget=widgets.Select(),
                                                       option_widget=widgets.CheckboxInput()),
                                   min_entries=1)
