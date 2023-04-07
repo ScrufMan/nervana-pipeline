@@ -103,14 +103,7 @@ def handle_normal(search_term):
     ]
 
 
-def find_entities(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
-    indices = dataset_to_indices(es, dataset, file_indices=False)
-
-    search = Search(using=es, index=indices)
-
-    search_from = (page - 1) * page_size
-    search = search[search_from:search_from + page_size]
-
+def add_entities_query_to_search(search, search_terms, entity_types_list):
     # Loop through search_terms and entity_types and create a search query for each term
     queries = []
     for search_term, entity_types in zip(search_terms, entity_types_list):
@@ -142,7 +135,31 @@ def find_entities(es: Elasticsearch, dataset, search_terms, entity_types_list, p
         minimum_should_match=1
     )
 
+    return search
+
+
+def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
+    indices = dataset_to_indices(es, dataset, file_indices=False)
+
+    search = Search(using=es, index=indices)
+
+    search_from = (page - 1) * page_size
+    search = search[search_from:search_from + page_size]
+
+    search = add_entities_query_to_search(search, search_terms, entity_types_list)
+
     response = search.execute()
+
+    return response
+
+def find_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
+    indices = dataset_to_indices(es, dataset, file_indices=False)
+
+    search = Search(using=es, index=indices)
+
+    search = add_entities_query_to_search(search, search_terms, entity_types_list)
+
+    response = search.scan()
 
     return response
 
@@ -151,8 +168,7 @@ def get_all_files(es: Elasticsearch, dataset):
     indices = dataset_to_indices(es, dataset, file_indices=True)
 
     s = Search(using=es, index=indices)
-    s = s[0:10000]
-    response = s.query(Q("match_all")).execute()
+    response = s.query(Q("match_all")).scan()
 
     return response
 

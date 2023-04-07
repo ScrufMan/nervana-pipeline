@@ -1,8 +1,11 @@
+import csv
 import json
+import os
+import tempfile
 
-from flask import render_template, request, jsonify
-from elastic import get_all_datasets, find_entities, get_all_files, get_file, get_top_values_for_field, \
-    get_top_files_field_values
+from flask import render_template, request, jsonify, send_file, after_this_request
+from elastic import get_all_datasets, find_entities_with_limit, get_all_files, get_file, get_top_values_for_field, \
+    get_top_files_field_values, find_entities
 
 from backend import app, es
 from backend.forms import SearchForm
@@ -27,7 +30,7 @@ def search():
     entity_types_list = form.entity_types_list.data
     results_per_page = int(form.results_per_page.data)
 
-    hits = find_entities(es, dataset, search_terms, entity_types_list, page, results_per_page)
+    hits = find_entities_with_limit(es, dataset, search_terms, entity_types_list, page, results_per_page)
     total_hits = hits.hits.total.value
 
     file_hits = get_all_files(es, dataset)
@@ -47,6 +50,35 @@ def search():
     return {'results': results_html}
 
 
+@app.route("/export-csv", methods=["POST"])
+def export_csv():
+    form = SearchForm(request.form)
+
+    if form.validate_on_submit():
+        dataset = form.dataset.data
+        search_terms = form.search_terms.data
+        entity_types_list = form.entity_types_list.data
+
+        hits = find_entities(es, dataset, search_terms, entity_types_list)
+
+        # Create a temporary file to store the CSV data
+        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as csvfile:
+            # Add a UTF-8 BOM at the beginning of the file
+            csvfile.write('\ufeff')
+            fieldnames = ['dataset', 'file_id', 'entity_type', 'value', 'lemmatized']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            datset = dataset.split("-entities")[0]
+            for hit in hits:
+                hit = hit.to_dict()
+                hit["dataset"] = dataset
+                writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
+
+        response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True, download_name = 'export.csv')
+        return response
+
+
 @app.route("/file/<string:index>/<string:file_id>")
 def show_file(index, file_id):
     dataset = index.split("-entities")[0]
@@ -56,6 +88,7 @@ def show_file(index, file_id):
     plaintext = file["plaintext"]
 
     return jsonify({"path": path, "plaintext": plaintext})
+
 
 @app.route("/")
 @app.route("/stats")

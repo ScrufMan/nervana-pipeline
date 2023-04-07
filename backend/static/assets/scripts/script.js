@@ -1,33 +1,30 @@
 $(document).ready(function () {
-    // don't close dropdown menu when clicking on label
-    $('.dropdown-menu').on('click', function (e) {
-        e.stopPropagation();
+    // don't close dropdown menu when clicking indise it
+    $(document).on('click', '.dropdown-menu', function (event) {
+        event.stopPropagation();
     });
 
-    $('.check-all').on('click', function () {
-        // Get the parent of the clicked element and its previous sibling
+    // When check-all button is clicked, check all checkboxes in dropdown menu
+    $(document).on('click', '.check-all', function () {
         const previousSibling = $(this).parent().prev();
-
-        // For each input inside the previous sibling, set checked
         previousSibling.find('input[type="checkbox"]').prop('checked', true);
     });
 
-    // Add a click event listener to all elements with the class .uncheck-all
-    $('.uncheck-all').on('click', function () {
-        // Get the parent of the clicked element and its previous sibling
+    // When ucheck-all button is clicked, uncheck all checkboxes in dropdown menu
+    $(document).on('click', '.uncheck-all', function () {
         const previousSibling = $(this).parent().prev();
-
-        // For each input inside the previous sibling, set unchecked
         previousSibling.find('input[type="checkbox"]').prop('checked', false);
     });
 
+    // Preserve form data when modifying form until form is submitted
     let originalFormData;
+
+    // When the search form is submitted, send an AJAX request to the server
     $('#search-form').submit(function (event) {
         event.preventDefault();
-        const formData = $(this).serialize();
-        originalFormData = $('#search-form').serialize();
+        originalFormData = $(this).serialize();
         const searchUrl = '/search'
-        loadResults(formData, searchUrl);
+        loadResults(originalFormData, searchUrl);
     });
 
     $(document).on('click', '.page-link', function (event) {
@@ -39,21 +36,50 @@ $(document).ready(function () {
         const formData = originalFormData;
         const pageUrl = $(this).attr('href');
 
-        $('.results').fadeOut(200)
+        const resultsDiv = $('.results');
+
+        resultsDiv.fadeOut(200)
         loadResults(formData, pageUrl);
-        $('.results').fadeIn(200)
-        // element to scroll to
-        const target = $('.results');
+        resultsDiv.fadeIn(200)
 
-
-        $('#search-form').se;
-        // scroll to the element
+        // scroll to the results div after the page has loaded
         $('html, body').animate({
-            scrollTop: target.offset().top
+            scrollTop: resultsDiv.offset().top
         }, 200);
+    });
+
+    $(document).on('click', '#export-csv', function () {
+        if (originalFormData) {
+            downloadCSV(originalFormData);
+        } else {
+            alert('Something went wrong with form data.');
+        }
     });
 });
 
+function checkSearchTerm(input) {
+    // Get the input value
+    let value = input.value;
+    input.setCustomValidity('');
+    // Check the value and set the background color accordingly
+    if (value.startsWith('r:')) {
+        // Get the regular expression entered after "r:"
+        let regexStr = value.substring(2);
+
+        // Lint the regular expression
+        try {
+            let regex = new RegExp(regexStr);
+            input.style.backgroundColor = '#9ef7aa';
+        } catch (e) {
+            input.style.backgroundColor = '#fc9f9f';
+            input.setCustomValidity('Regulární výraz není správný');
+        }
+    } else if (value.startsWith('"') && value.endsWith('"')) {
+        input.style.backgroundColor = '#fff79c';
+    } else {
+        input.style.backgroundColor = '';
+    }
+}
 
 let nextFieldIdx = 1;
 
@@ -67,36 +93,19 @@ function addSearchCondition() {
     // Creating a new prepend div element with classes "input-group-prepend" and "d-block"
     const prependDiv = $('<div></div>').addClass('input-group-prepend d-block');
 
-    // Creating a new button element with classes "btn" and "btn-outline-secondary", setting its type to "button", and adding an onclick event handler
     const button = $('<button></button>').addClass('btn btn-outline-secondary').attr('type', 'button').click(() => {
         row.remove();
         nextFieldIdx--;
     }).html('–');
 
     // Getting the default input element with id "search_terms-0", cloning it, and modifying its attributes
-    const input = $('#search_terms-0').clone().removeAttr('style').attr({
+    const input = $('#search_terms-0').clone().val('').removeAttr('style').attr({
         'name': `search_terms-${nextFieldIdx}`,
         'id': `search_terms-${nextFieldIdx}`,
-        'value': '',
     }).addClass('rounded-right');
 
     // Getting the default entity types group element with id "entityTypesGroup", cloning it, and modifying its attributes
     const entityTypesGroup = $('#entityTypesGroup').clone().removeClass('mt-3');
-
-    // Adding event listeners to the entity types group's dropdown-menu and check-all elements
-    entityTypesGroup.find('.dropdown-menu').on('click', function (e) {
-        e.stopPropagation();
-    });
-    entityTypesGroup.find('.check-all').on('click', function () {
-        const previousSibling = $(this).parent().prev();
-        previousSibling.find('input[type="checkbox"]').prop('checked', true);
-    });
-
-    // Adding an event listener to all elements with the class .uncheck-all
-    entityTypesGroup.find('.uncheck-all').on('click', function () {
-        const previousSibling = $(this).parent().prev();
-        previousSibling.find('input[type="checkbox"]').prop('checked', false);
-    });
 
     // Modifying the cloned entity types group's input elements' attributes
     entityTypesGroup.find('input').each(function () {
@@ -146,26 +155,22 @@ function loadResults(formData, url) {
     });
 }
 
-function checkSearchTerm(input) {
-    // Get the input value
-    let value = input.value;
-    input.setCustomValidity('');
-    // Check the value and set the background color accordingly
-    if (value.startsWith('r:')) {
-        // Get the regular expression entered after "r:"
-        let regexStr = value.substring(2);
-
-        // Lint the regular expression
-        try {
-            let regex = new RegExp(regexStr);
-            input.style.backgroundColor = '#9ef7aa';
-        } catch (e) {
-            input.style.backgroundColor = '#fc9f9f';
-            input.setCustomValidity('Regulární výraz není správný');
+// Function to download the CSV file
+function downloadCSV(formData) {
+    fetch('/export-csv', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
         }
-    } else if (value.startsWith('"') && value.endsWith('"')) {
-        input.style.backgroundColor = '#fff79c';
-    } else {
-        input.style.backgroundColor = '';
-    }
+    })
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'results.csv';
+            a.click();
+        });
 }
+
