@@ -82,6 +82,15 @@ form label {
     color: #ffe074;
 }
 
+.logo {
+    max-width: 11rem;
+}
+
+.logo img {
+    width: 100%;
+    height: auto;
+}
+
 /* Lišta pro listování výsledků */
 .pagination {
     justify-content: center;
@@ -100,8 +109,13 @@ h1 {
     color: #999999 !important;
 }
 
-.dropdown-menu {
-    min-width: 208px;
+.dropdown-item:hover {
+  background-color: transparent;
+}
+
+.dropdown-item label {
+  color: #212529 !important; /* set the label color to the default value */
+    margin-bottom: 0;
 }
 
 #file_contents_modal .modal-body {

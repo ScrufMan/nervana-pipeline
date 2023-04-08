@@ -6,14 +6,14 @@ $(document).ready(function () {
 
     // When check-all button is clicked, check all checkboxes in dropdown menu
     $(document).on('click', '.check-all', function () {
-        const previousSibling = $(this).parent().prev();
-        previousSibling.find('input[type="checkbox"]').prop('checked', true);
+        const dropdown = $(this).parent().parent();
+        dropdown.find('input[type="checkbox"]').prop('checked', true);
     });
 
     // When ucheck-all button is clicked, uncheck all checkboxes in dropdown menu
     $(document).on('click', '.uncheck-all', function () {
-        const previousSibling = $(this).parent().prev();
-        previousSibling.find('input[type="checkbox"]').prop('checked', false);
+        const dropdown = $(this).parent().parent();
+        dropdown.find('input[type="checkbox"]').prop('checked', false);
     });
 
     // Preserve form data when modifying form until form is submitted
@@ -109,6 +109,7 @@ function addSearchCondition() {
 
     // Modifying the cloned entity types group's input elements' attributes
     entityTypesGroup.find('input').each(function () {
+        $(this).prop('checked', true);
         const name = $(this).attr('name');
         const id = $(this).attr('id');
         const newName = name.replace(/entity_types_list-\d+/g, `entity_types_list-${nextFieldIdx}`);
@@ -144,7 +145,7 @@ function loadResults(formData, url) {
                     success: function (response) {
                         $('.modal-title').text(response.path);
                         $('#file_contents_pre').text(response.plaintext);
-                        $('#file_contents_modal').modal('show');
+                        $('#file-contents-modal').modal('show');
                     }
                 });
             });

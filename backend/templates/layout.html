@@ -14,7 +14,11 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
             <div class="d-flex mx-5">
-                <a class="navbar-brand mr-3" href="{{ url_for("stats") }}"><h1 class="mb-0">NERvana</h1></a>
+                <div class="logo">
+                    <a class="navbar-brand mr-3" href="{{ url_for('stats') }}">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="">
+                    </a>
+                </div>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                         aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -54,6 +58,6 @@
         integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
         crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="{{ url_for('static', filename='assets/scripts/script.js    ') }}"></script>
+<script src="{{ url_for('static', filename='assets/scripts/script.js') }}"></script>
 </body>
 </html>

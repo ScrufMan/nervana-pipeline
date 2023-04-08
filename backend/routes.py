@@ -72,7 +72,7 @@ def export_csv():
             datset = dataset.split("-entities")[0]
             for hit in hits:
                 hit = hit.to_dict()
-                hit["dataset"] = dataset
+                hit["dataset"] = dataset if dataset != "_all" else "Všechny"
                 writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
 
         response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True, download_name = 'export.csv')
