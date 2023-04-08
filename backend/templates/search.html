@@ -68,9 +68,9 @@
             </div>
 
             <!-- File content modal -->
-            <div class="modal fade" id="file-contents-modal" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
+            <div class="modal fade" id="file-contents-modal" tabindex="-1" role="document">
+                <div class="modal-dialog modal-dialog-scrollable modal-xl">
+                    <div class="modal-content px-1">
                         <div class="modal-header">
                             <h5 class="modal-title"></h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -78,7 +78,35 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <pre id="file_contents_pre"></pre>
+                            <pre id="file-contents-pre"></pre>
+                        </div>
+                        <div class="modal-footer px-2">
+                            <div class="container-fluid px-0">
+                                <div class="row align-items-center">
+                                    <div class="col-6">
+                                        <input type="text" id="modal-search-input" class="form-control"
+                                               placeholder="Hledat:">
+                                    </div>
+                                    <div class="col-1">
+                                        <button type="button" id="modal-search-prev" class="btn btn-light w-100">
+                                            &larr;
+                                        </button>
+                                    </div>
+                                    <div class="col-1">
+                                        <button type="button" id="modal-search-next" class="btn btn-light w-100">
+                                            &rarr;
+                                        </button>
+                                    </div>
+                                    <div class="col-2">
+                                        <span id="modal-search-info" class="d-inline-block w-100 text-left"></span>
+                                    </div>
+                                    <div class="col-2">
+                                        <button type="button" id="modal-scroll-to-top" class="btn btn-link">
+                                            Nahoru
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

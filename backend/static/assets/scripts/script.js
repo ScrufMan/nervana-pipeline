@@ -55,7 +55,87 @@ $(document).ready(function () {
             alert('Something went wrong with form data.');
         }
     });
+
+    // modal search
+    let currentIndex = 0;
+    let matches = [];
+
+    function scrollToMatch(index) {
+        if (matches.length > 0) {
+            const position = matches[index];
+            $('.search-match').removeClass('search-match-current'); // Remove 'search-match-current' class from all matches
+            matches[index].element.addClass('search-match-current'); // Add 'search-match-current' class to the current match
+
+            $('.modal-body').scrollTop(position.top); // Scroll to the current match
+        }
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    $('#file-contents-modal').on('show.bs.modal', function () {
+        currentIndex = 0;
+        matches = [];
+        $('#modal-search-input').val('');
+        $('#modal-search-info').text('');
+    });
+
+    $('#modal-search-input').on('keyup', function () {
+        currentIndex = 0;
+        let searchText = $(this).val().toLowerCase();
+
+        // Remove 'search-match-current' class from the previous match
+        $('.search-match-current').removeClass('search-match-current');
+
+        $('#file-contents-pre').html(function (_, htmlContent) {
+            // Remove old matches
+            htmlContent = htmlContent.replace(/<mark class="search-match(?:-current)?">([\s\S]*?)<\/mark>/gi, '$1');
+
+            if (searchText !== '') {
+                const regex = new RegExp('(' + escapeRegExp(searchText) + ')', 'gi');
+                matches = [];
+                htmlContent = htmlContent.replace(regex, function (match) {
+                    matches.push({match: match, index: matches.length});
+                    return '<mark class="search-match">' + match + '</mark>';
+                });
+                $('#modal-search-info').text(matches.length > 0 ? `${currentIndex + 1} of ${matches.length}` : '');
+            } else {
+                $('#modal-search-info').text(''); // Clear modal-search-info text when search field is empty
+            }
+            return htmlContent;
+        });
+
+        matches = [];
+        $('.search-match').each(function (index) {
+            matches.push({match: $(this).text(), index: index, top: $(this).position().top, element: $(this)});
+        });
+
+        scrollToMatch(currentIndex);
+    });
+
+
+    $('#modal-search-next').on('click', function () {
+        if (matches.length > 0) {
+            currentIndex = (currentIndex + 1) % matches.length;
+            scrollToMatch(currentIndex);
+            $('#modal-search-info').text(`${currentIndex + 1} of ${matches.length}`);
+        }
+    });
+
+    $('#modal-search-prev').on('click', function () {
+        if (matches.length > 0) {
+            currentIndex = (currentIndex - 1 + matches.length) % matches.length;
+            scrollToMatch(currentIndex);
+            $('#modal-search-info').text(`${currentIndex + 1} of ${matches.length}`);
+        }
+    });
+
+    $('#modal-scroll-to-top').on('click', function () {
+        $('.modal-body').animate({scrollTop: 0}, 500);
+    });
 });
+
 
 function checkSearchTerm(input) {
     // Get the input value
@@ -144,7 +224,7 @@ function loadResults(formData, url) {
                     url: $(this).attr('href'),
                     success: function (response) {
                         $('.modal-title').text(response.path);
-                        $('#file_contents_pre').text(response.plaintext);
+                        $('#file-contents-pre').text(response.plaintext);
                         $('#file-contents-modal').modal('show');
                     }
                 });

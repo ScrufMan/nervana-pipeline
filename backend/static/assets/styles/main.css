@@ -110,24 +110,28 @@ h1 {
 }
 
 .dropdown-item:hover {
-  background-color: transparent;
+    background-color: transparent;
 }
 
 .dropdown-item label {
-  color: #212529 !important; /* set the label color to the default value */
+    color: #212529 !important; /* set the label color to the default value */
     margin-bottom: 0;
 }
 
-#file_contents_modal .modal-body {
-    padding: 0;
-}
+/* Modal */
 
-#file_contents_pre {
+#file-contents-pre {
     white-space: pre-wrap;
     word-wrap: break-word;
     overflow-x: auto;
-    max-height: 700px;
-    padding: 10px;
+}
+
+.search-match {
+    background-color: yellow;
+}
+
+.search-match-current {
+    background-color: orange;
 }
 
 /* Pata stránky */
