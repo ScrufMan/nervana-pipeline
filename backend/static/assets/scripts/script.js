@@ -60,7 +60,7 @@ $(document).ready(function () {
     let currentIndex = 0;
     let matches = [];
 
-     // Scroll to the currently matched item
+    // Scroll to the currently matched item
     function scrollToMatch(index) {
         if (matches.length > 0) {
             const position = matches[index];
@@ -260,8 +260,33 @@ function downloadCSV(formData) {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'results.csv';
+            a.download = 'export.csv';
             a.click();
+        });
+}
+
+function downloadFile(file_path) {
+    const url = '/download-file/' + encodeURIComponent(file_path);
+    const fileName = file_path.split('/').pop().split('\\').pop(); // Get the file name from the path, considering both / and \ as separators
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(json => {
+                    throw new Error(json.error);
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+        })
+        .catch(error => {
+            alert(`Chyba: ${error.message}`);
         });
 }
 

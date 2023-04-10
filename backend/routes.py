@@ -3,7 +3,7 @@ import json
 import os
 import tempfile
 
-from flask import render_template, request, jsonify, send_file, after_this_request
+from flask import render_template, request, jsonify, send_file, after_this_request, send_from_directory
 from elastic import get_all_datasets, find_entities_with_limit, get_all_files, get_file, get_top_values_for_field, \
     get_top_files_field_values, find_entities
 
@@ -15,7 +15,6 @@ from email_analyzer import run_analysis
 
 
 @app.route("/search", methods=["GET", "POST"])
-# TODO: export to csv, dataset, filename, type, value, context
 def search():
     form = SearchForm(request.form)
 
@@ -75,7 +74,7 @@ def export_csv():
                 hit["dataset"] = dataset if dataset != "_all" else "Všechny"
                 writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
 
-        response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True, download_name = 'export.csv')
+        response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True)
         return response
 
 
@@ -88,6 +87,16 @@ def show_file(index, file_id):
     plaintext = file["plaintext"]
 
     return jsonify({"path": path, "plaintext": plaintext})
+
+
+@app.route('/download-file/<path:file_path>')
+def download_file(file_path):
+    absolute_file_path = os.path.abspath(file_path)
+
+    if not os.path.exists(absolute_file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    return send_file(absolute_file_path, as_attachment=True)
 
 
 @app.route("/")

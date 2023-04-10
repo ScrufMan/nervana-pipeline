@@ -3,7 +3,7 @@ class FoundEntity:
         self.filename = filename
         self.context = context
         self.dataset = dataset
-        self.file_path = file_path,
+        self.file_path = file_path
         self.file_id = file_id
 
 
