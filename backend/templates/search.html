@@ -73,7 +73,7 @@
                 <div class="modal-dialog modal-dialog-scrollable modal-xl">
                     <div class="modal-content px-1">
                         <div class="modal-header">
-                            <h5 class="modal-title"></h5>
+                            <h5 class="modal-title" id="file-content-modal-title"></h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -108,6 +108,30 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSV export modal modal -->
+            <div class="modal fade" id="csv-export-modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Název exportu</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="csv-export-input">Název</label>
+                                <input type="text" class="form-control" id="csv-export-input" value="export">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
+                            <button type="button" class="btn btn-primary" id="download-csv">Stáhnout</button>
                         </div>
                     </div>
                 </div>

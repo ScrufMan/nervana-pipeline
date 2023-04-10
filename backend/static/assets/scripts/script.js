@@ -49,11 +49,20 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '#export-csv', function () {
+        // Show the filename modal instead of directly downloading the CSV file
+        $('#csv-export-modal').modal('show');
+    });
+
+    // Download the CSV file when the download button is clicked in the modal
+    $(document).on('click', '#download-csv', function () {
+        const filename = $('#csv-export-input').val() || 'export.csv';
         if (originalFormData) {
-            downloadCSV(originalFormData);
+            downloadCSV(originalFormData, filename);
         } else {
             alert('Something went wrong with form data.');
         }
+        // Close the filename modal
+        $('#filename-modal').modal('hide');
     });
 
     // Function for handling modal search
@@ -233,7 +242,7 @@ function loadResults(formData, url) {
                     type: 'GET',
                     url: $(this).attr('href'),
                     success: function (response) {
-                        $('.modal-title').text(response.path);
+                        $('#file-content-modal-title').text(response.path);
                         $('#file-contents-pre').text(response.plaintext);
                         $('#file-contents-modal').modal('show');
                     }
@@ -247,7 +256,7 @@ function loadResults(formData, url) {
 }
 
 // Function to download the CSV file
-function downloadCSV(formData) {
+function downloadCSV(formData, filename) {
     fetch('/export-csv', {
         method: 'POST',
         body: formData,
@@ -260,7 +269,7 @@ function downloadCSV(formData) {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'export.csv';
+            a.download = filename;
             a.click();
         });
 }
