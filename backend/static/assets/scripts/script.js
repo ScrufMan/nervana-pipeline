@@ -56,24 +56,27 @@ $(document).ready(function () {
         }
     });
 
-    // modal search
+    // Function for handling modal search
     let currentIndex = 0;
     let matches = [];
 
+     // Scroll to the currently matched item
     function scrollToMatch(index) {
         if (matches.length > 0) {
             const position = matches[index];
-            $('.search-match').removeClass('search-match-current'); // Remove 'search-match-current' class from all matches
-            matches[index].element.addClass('search-match-current'); // Add 'search-match-current' class to the current match
+            $('.search-match').removeClass('search-match-current'); // Deselect previous match
+            matches[index].element.addClass('search-match-current'); // Highlight the current match
 
-            $('.modal-body').scrollTop(position.top); // Scroll to the current match
+            $('.modal-body').scrollTop(position.top); // Scroll to the current match position
         }
     }
 
+    // Escape special characters in the search string for use in a RegExp
     function escapeRegExp(string) {
         return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
     }
 
+    // Reset search variables when the modal is shown
     $('#file-contents-modal').on('show.bs.modal', function () {
         currentIndex = 0;
         matches = [];
@@ -81,17 +84,20 @@ $(document).ready(function () {
         $('#modal-search-info').text('');
     });
 
+    // Handle search input changes
     $('#modal-search-input').on('keyup', function () {
         currentIndex = 0;
         let searchText = $(this).val().toLowerCase();
 
-        // Remove 'search-match-current' class from the previous match
+        // Remove the highlight from the previous match
         $('.search-match-current').removeClass('search-match-current');
 
+        // Update the content of the preformatted text element with new matches
         $('#file-contents-pre').html(function (_, htmlContent) {
             // Remove old matches
             htmlContent = htmlContent.replace(/<mark class="search-match(?:-current)?">([\s\S]*?)<\/mark>/gi, '$1');
 
+            // Highlight new matches
             if (searchText !== '') {
                 const regex = new RegExp('(' + escapeRegExp(searchText) + ')', 'gi');
                 matches = [];
@@ -99,38 +105,42 @@ $(document).ready(function () {
                     matches.push({match: match, index: matches.length});
                     return '<mark class="search-match">' + match + '</mark>';
                 });
-                $('#modal-search-info').text(matches.length > 0 ? `${currentIndex + 1} of ${matches.length}` : '');
+                $('#modal-search-info').text(matches.length > 0 ? `${currentIndex + 1} z ${matches.length}` : '');
             } else {
-                $('#modal-search-info').text(''); // Clear modal-search-info text when search field is empty
+                $('#modal-search-info').text(''); // Clear search info text when search field is empty
             }
             return htmlContent;
         });
 
+        // Update the matches array with new match elements and positions
         matches = [];
         $('.search-match').each(function (index) {
             matches.push({match: $(this).text(), index: index, top: $(this).position().top, element: $(this)});
         });
 
+        // Scroll to the first match
         scrollToMatch(currentIndex);
     });
 
-
+    // Handle "Next" button click
     $('#modal-search-next').on('click', function () {
         if (matches.length > 0) {
             currentIndex = (currentIndex + 1) % matches.length;
             scrollToMatch(currentIndex);
-            $('#modal-search-info').text(`${currentIndex + 1} of ${matches.length}`);
+            $('#modal-search-info').text(`${currentIndex + 1} z ${matches.length}`);
         }
     });
 
+    // Handle "Previous" button click
     $('#modal-search-prev').on('click', function () {
         if (matches.length > 0) {
             currentIndex = (currentIndex - 1 + matches.length) % matches.length;
             scrollToMatch(currentIndex);
-            $('#modal-search-info').text(`${currentIndex + 1} of ${matches.length}`);
+            $('#modal-search-info').text(`${currentIndex + 1} z ${matches.length}`);
         }
     });
 
+    // Handle "Scroll to Top" button click
     $('#modal-scroll-to-top').on('click', function () {
         $('.modal-body').animate({scrollTop: 0}, 500);
     });

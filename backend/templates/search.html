@@ -29,7 +29,7 @@
                                 <button class="btn dropdown-toggle p-0" type="button"
                                         data-toggle="dropdown"
                                         aria-haspopup="true" aria-expanded="true">
-                                    {{ entity_types.label() }} <span class="caret"></span>
+                                    {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
                                 </button>
                                 <div class="dropdown-menu">
                                     {% for checkbox in entity_types %}
@@ -66,6 +66,7 @@
 
             <div class="results">
             </div>
+
 
             <!-- File content modal -->
             <div class="modal fade" id="file-contents-modal" tabindex="-1" role="document">
