@@ -102,14 +102,25 @@ def download_file(file_path):
 @app.route("/")
 @app.route("/stats")
 def stats():
-    datasets = get_all_datasets(es)
-    return render_template("stats.html", datasets=datasets)
+    from elasticsearch_dsl import Search
+    files_search = Search(using=es, index="zachyt_1-files")
+    entities_search = Search(using=es, index="zachyt_1-entities")
 
+    # Aggregations for graph data
+    files_search.aggs.bucket("file_formats", "terms", field="format")
+    entities_search.aggs.bucket("entity_types", "terms", field="entity_type")
 
-@app.route("/stats/file-format")
-def file_formats():
-    data = get_top_files_field_values(es, "_all", "format")
-    return json.dumps(data)
+    files_response = files_search.execute()
+    entities_response = entities_search.execute()
+
+    file_formats = files_response.aggregations.file_formats.buckets
+    entity_types = entities_response.aggregations.entity_types.buckets
+
+    # Convert AttrList objects to dictionaries
+    file_formats = [bucket.to_dict() for bucket in file_formats]
+    entity_types = [bucket.to_dict() for bucket in entity_types]
+
+    return render_template("stats.html", file_formats=file_formats, entity_types=entity_types)
 
 
 @app.route("/email")
