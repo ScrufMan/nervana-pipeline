@@ -1,64 +1,94 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="row">
-        <div class="col-md-6">
-            <h2>File Formats</h2>
-            <svg id="file-formats-graph"></svg>
+    <div class="row mt-4">
+        <div class="col-lg-6 col-md-12">
+            <h2 class="text-center">Formáty souború</h2>
+            <canvas id="file-formats-graph"></canvas>
         </div>
         <div class="col-md-6">
-            <h2>Entity Types</h2>
-            <svg id="entity-types-graph"></svg>
+            <h2 class="text-center">Subory s nejvíce entitami</h2>
+            <canvas id="top-files-graph"></canvas>
         </div>
     </div>
-
+    <div class="row mt-3">
+        <div class="col-lg-6 col-md-12">
+            <h2 class="text-center">Typy entit</h2>
+            <canvas id="entity-types-graph"></canvas>
+        </div>
+        <div class="col-lg-6 col-md-12">
+            <h2 class="text-center">Nejčastejší entity</h2>
+            <canvas id="most-common-values-graph"></canvas>
+        </div>
+    </div>
     <script>
         $(document).ready(function () {
             const formats = {{ file_formats|tojson }};
             const entityTypes = {{ entity_types|tojson }};
 
             // Function to create bar graphs
-            function createBarGraph(svgId, data) {
-                const margin = {top: 20, right: 20, bottom: 30, left: 40};
-                const width = $(svgId).parent().width() - margin.left - margin.right;
-                const height = 300 - margin.top - margin.bottom;
-
-                const x = d3.scaleBand()
-                    .range([0, width])
-                    .padding(0.1);
-                const y = d3.scaleLinear()
-                    .range([height, 0]);
-
-                const svg = d3.select(svgId)
-                    .attr('width', width + margin.left + margin.right)
-                    .attr('height', height + margin.top + margin.bottom)
-                    .append('g')
-                    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-
-                x.domain(data.map(d => d.key));
-                y.domain([0, d3.max(data, d => d.doc_count)]);
-
-                svg.append('g')
-                    .attr('class', 'x axis')
-                    .attr('transform', 'translate(0,' + height + ')')
-                    .call(d3.axisBottom(x));
-
-                svg.append('g')
-                    .attr('class', 'y axis')
-                    .call(d3.axisLeft(y).ticks(5));
-
-                svg.selectAll('.bar')
-                    .data(data)
-                    .enter().append('rect')
-                    .attr('class', 'bar')
-                    .attr('x', d => x(d.key))
-                    .attr('width', x.bandwidth())
-                    .attr('y', d => y(d.doc_count))
-                    .attr('height', d => height - y(d.doc_count));
+            function createBarGraph(ctx, labels, data) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: '#059af7'
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
             }
 
             // Create graphs
-            createBarGraph('#file-formats-graph', formats);
-            createBarGraph('#entity-types-graph', entityTypes);
+            createBarGraph(document.getElementById('file-formats-graph').getContext('2d'), formats.map(d => d.key), formats.map(d => d.doc_count));
+            createBarGraph(document.getElementById('entity-types-graph').getContext('2d'), entityTypes.map(d => d.key), entityTypes.map(d => d.doc_count));
+
+            const fileEntities = {{ file_entities|tojson }};
+            const mostCommonValues = {{ most_common_values|tojson }};
+
+            // Function to create a horizontal bar chart
+            function createHorizontalBarChart(ctx, labels, data) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: '#FFA500'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            createHorizontalBarChart(document.getElementById('top-files-graph').getContext('2d'), fileEntities.map(d => d.filename), fileEntities.map(d => d.doc_count));
+            createHorizontalBarChart(document.getElementById('most-common-values-graph').getContext('2d'), mostCommonValues.map(d => d.key), mostCommonValues.map(d => d.doc_count));
+
         });
+
     </script>
 {% endblock content %}
