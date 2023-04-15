@@ -35,7 +35,7 @@ class File:
             self.original_plaintext = tika_response["content"]
             self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
             self.author = tika_response["metadata"].get("Author", None)
-            self.lang = lang_detetctor.detect_language_of(self.plaintext).iso_code_639_1.name.lower()
+            self.lang = lang_detetctor.detect_language_of(self.plaintext)
 
             if FILTER:
                 filter_plaintext(self)
@@ -52,7 +52,7 @@ class File:
             "path": self.path,
             "format": self.format,
             "plaintext": self.original_plaintext,
-            "language": self.lang.name.lower(),
+            "language": self.lang.iso_code_639_1.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp
         }
