@@ -16,7 +16,7 @@ def dataset_to_indices(es: Elasticsearch, dataset: str, file_indices: bool) -> L
     else:
         index_suffix = "-entities"
 
-    if dataset == "_all":
+    if dataset == "all":
         # Get a list of all indices in the cluster
         indices = es.cat.indices(format="json")
 

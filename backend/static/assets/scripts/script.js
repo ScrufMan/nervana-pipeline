@@ -28,6 +28,7 @@ $(document).ready(function () {
     });
 
     $(document).on('click', '.page-link', function (event) {
+        // prevent reloading the results when clicking on an active page link
         if ($(this).parent().hasClass('active')) {
             return
         }

@@ -2,22 +2,29 @@
 {% block content %}
     <div class="row mt-4">
         <div class="col-lg-6 col-md-12">
-            <h2 class="text-center">Formáty souború</h2>
-            <canvas id="file-formats-graph"></canvas>
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="text-center">Nejčastejší entity typu: </h2>
+                </div>
+                <div class="col-md-4">
+                    {{ form.entity_type(class="form-control form-control-sm") }}
+                </div>
+            </div>
+            <canvas id="most-common-values-graph"></canvas>
         </div>
-        <div class="col-md-6">
+        <div class="col-lg-6 col-md-12">
             <h2 class="text-center">Subory s nejvíce entitami</h2>
             <canvas id="top-files-graph"></canvas>
         </div>
     </div>
     <div class="row mt-3">
         <div class="col-lg-6 col-md-12">
-            <h2 class="text-center">Typy entit</h2>
-            <canvas id="entity-types-graph"></canvas>
+            <h2 class="text-center">Formáty souború</h2>
+            <canvas id="file-formats-graph"></canvas>
         </div>
         <div class="col-lg-6 col-md-12">
-            <h2 class="text-center">Nejčastejší entity</h2>
-            <canvas id="most-common-values-graph"></canvas>
+            <h2 class="text-center">Typy entit</h2>
+            <canvas id="entity-types-graph"></canvas>
         </div>
     </div>
     <script>
@@ -37,6 +44,7 @@
                         }]
                     },
                     options: {
+                        responsive: true,
                         plugins: {
                             legend: {
                                 display: false
@@ -60,7 +68,7 @@
 
             // Function to create a horizontal bar chart
             function createHorizontalBarChart(ctx, labels, data) {
-                new Chart(ctx, {
+                return new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
@@ -73,20 +81,37 @@
                         indexAxis: 'y',
                         plugins: {
                             legend: {
-                                display: false
+                                display: false,
                             },
                         },
                         scales: {
                             x: {
-                                beginAtZero: true
-                            }
+                                beginAtZero: true,
+                            },
                         }
                     }
                 });
             }
 
             createHorizontalBarChart(document.getElementById('top-files-graph').getContext('2d'), fileEntities.map(d => d.filename), fileEntities.map(d => d.doc_count));
-            createHorizontalBarChart(document.getElementById('most-common-values-graph').getContext('2d'), mostCommonValues.map(d => d.key), mostCommonValues.map(d => d.doc_count));
+            let mostCommonValuesGraph = createHorizontalBarChart(document.getElementById('most-common-values-graph').getContext('2d'), mostCommonValues.map(d => d.key), mostCommonValues.map(d => d.doc_count));
+
+            document.getElementById('entity_type').addEventListener('change', (event) => {
+                const selectedEntityType = event.target.value;
+                updateMostCommonValuesGraph(selectedEntityType);
+            });
+
+            function updateMostCommonValuesGraph(entityType) {
+                // Fetch the data using the provided entity type and render the graph
+                fetch(`/update-graph?entity_type=${entityType}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update the data in the lemmatized terms graph
+                        mostCommonValuesGraph.data.labels = data.map(d => d.key);
+                        mostCommonValuesGraph.data.datasets[0].data = data.map(d => d.doc_count);
+                        mostCommonValuesGraph.update(); // Update the graph
+                    });
+            }
 
         });
 

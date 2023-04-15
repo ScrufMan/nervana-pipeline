@@ -3,12 +3,12 @@ import json
 import os
 import tempfile
 
-from flask import render_template, request, jsonify, send_file, after_this_request, send_from_directory
+from flask import render_template, request, jsonify, send_file
 from elastic import get_all_datasets, find_entities_with_limit, get_all_files, get_file, get_top_values_for_field, \
     get_top_files_field_values, find_entities
 
 from backend import app, es
-from backend.forms import SearchForm
+from backend.forms import SearchForm, EntityTypeForm
 from backend.models import entities_from_hits
 from flask_paginate import Pagination
 from email_analyzer import run_analysis
@@ -70,7 +70,7 @@ def export_csv():
 
             for hit in hits:
                 hit = hit.to_dict()
-                hit["dataset"] = dataset if dataset != "_all" else "Všechny"
+                hit["dataset"] = dataset if dataset != "all" else "Všechny"
                 writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
 
         response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True)
@@ -116,14 +116,17 @@ def stats():
     }
 
     from elasticsearch_dsl import Search
+
+    form = EntityTypeForm()
+
     files_search = Search(using=es, index="zachyt_1-files")
     entities_search = Search(using=es, index="zachyt_1-entities")
 
     # Aggregations for graph data
     files_search.aggs.bucket("file_formats", "terms", field="format")
     entities_search.aggs.bucket("entity_types", "terms", field="entity_type")
-    entities_search.aggs.bucket("most_common_values", "terms", field="lemmatized.keyword")
     entities_search.aggs.bucket("file_entities", "terms", field="file_id", order={"_count": "desc"})
+    entities_search.aggs.bucket("most_common_values", "terms", field="lemmatized.keyword")
 
     files_response = files_search.execute()
     entities_response = entities_search.execute()
@@ -145,8 +148,27 @@ def stats():
 
     return render_template("stats.html", file_formats=file_formats, entity_types=entity_types,
                            most_common_values=most_common_values,
-                           file_entities=file_entities)
+                           file_entities=file_entities, form=form)
 
+
+@app.route("/update-graph", methods=["GET"])
+def update_graph():
+    from elasticsearch_dsl import Search
+
+    most_common_entity_type = request.args.get("entity_type", "all")
+
+    entities_search = Search(using=es, index="zachyt_1-entities")
+
+    if most_common_entity_type != "all":
+        entities_search = entities_search.filter('term', entity_type=most_common_entity_type)
+
+    entities_search.aggs.bucket("most_common_values", "terms", field="lemmatized.keyword")
+
+    entities_response = entities_search.execute()
+    most_common_values = entities_response.aggregations.most_common_values.buckets
+    most_common_values = [bucket.to_dict() for bucket in most_common_values]
+
+    return jsonify(most_common_values)
 
 @app.route("/email")
 def email():
