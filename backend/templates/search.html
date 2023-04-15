@@ -1,51 +1,101 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="row justify-content-center pt-4">
+    <div class="row justify-content-center mt-4">
 
-        <div class="col-md-10">
+        <div class="col-md-11">
             <!-- Search form -->
             <form method="post" action="" id="search-form">
                 {{ form.hidden_tag() }}
                 <div class="form-row justify-content-between align-items-end">
-                    <div class="form-group col-md-7">
+                    <div class="form-group col-lg-6 col-sm-4">
                         {{ form.dataset.label() }}
                         {{ form.dataset(class="form-control") }}
                     </div>
-                    <div class="col-md-4 form-group form-inline">
-                        {{ form.results_per_page(class="form-control mr-3") }}
+                    <div class="form-group form-inline col-lg-5 col-sm-6">
+                        {{ form.results_per_page(class="form-control mr-sm-3") }}
                         {{ form.results_per_page.label(class="font-weight-normal") }}
                     </div>
                 </div>
                 <div class="form-row justify-content-between align-items-center">
-                    <div class="form-group col-md-7">
+                    <div class="form-group col-lg-6">
                         {% for search_term in form.search_terms %}
                             {{ search_term.label() }}
                             {{ search_term(class="form-control") }}
                         {% endfor %}
                     </div>
-                    <div id="entityTypesGroup" class="form-group col-md-4 mt-3">
-                        {% for entity_types in form.entity_types_list %}
-                            <div class="dropdown">
-                                <button class="btn dropdown-toggle p-0" type="button"
-                                        data-toggle="dropdown"
-                                        aria-haspopup="true" aria-expanded="true">
-                                    {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
-                                </button>
-                                <div class="dropdown-menu">
-                                    {% for checkbox in entity_types %}
-                                        <div class="dropdown-item">
-                                            {{ checkbox(checked='checked') }}
-                                            {{ checkbox.label() }}
+                    <div class="col-lg-5 d-flex justify-content-lg-between justify-content-around align-items-center flex-sm-row flex-column">
+                        <div id="entityTypesGroup" class="form-group mt-2 px-0">
+                            {% for entity_types in form.entity_types_list %}
+                                <div class="dropdown">
+                                    <button class="btn dropdown-toggle p-0" type="button"
+                                            data-toggle="dropdown"
+                                            aria-haspopup="true" aria-expanded="true">
+                                        {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        {% for checkbox in entity_types %}
+                                            <div class="dropdown-item">
+                                                {{ checkbox(checked='checked') }}
+                                                {{ checkbox.label() }}
+                                            </div>
+                                        {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-item d-flex justify-content-between">
+                                            <button class="btn btn-link p-0 check-all" type="button">Všechny</button>
+                                            <button class="btn btn-link p-0 uncheck-all" type="button">Žádné</button>
                                         </div>
-                                    {% endfor %}
-                                    <div class="dropdown-divider"></div>
-                                    <div class="dropdown-item d-flex justify-content-between">
-                                        <button class="btn btn-link p-0 check-all" type="button">Všechny</button>
-                                        <button class="btn btn-link p-0 uncheck-all" type="button">Žádné</button>
                                     </div>
                                 </div>
-                            </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
+                        <div id="entityTypesGroup" class="form-group mt-2 px-0">
+                            {% for entity_types in form.entity_types_list %}
+                                <div class="dropdown">
+                                    <button class="btn dropdown-toggle p-0" type="button"
+                                            data-toggle="dropdown"
+                                            aria-haspopup="true" aria-expanded="true">
+                                        {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        {% for checkbox in entity_types %}
+                                            <div class="dropdown-item">
+                                                {{ checkbox(checked='checked') }}
+                                                {{ checkbox.label() }}
+                                            </div>
+                                        {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-item d-flex justify-content-between">
+                                            <button class="btn btn-link p-0 check-all" type="button">Všechny</button>
+                                            <button class="btn btn-link p-0 uncheck-all" type="button">Žádné</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div id="entityTypesGroup" class="form-group mt-2 px-0">
+                            {% for entity_types in form.entity_types_list %}
+                                <div class="dropdown">
+                                    <button class="btn dropdown-toggle p-0" type="button"
+                                            data-toggle="dropdown"
+                                            aria-haspopup="true" aria-expanded="true">
+                                        {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        {% for checkbox in entity_types %}
+                                            <div class="dropdown-item">
+                                                {{ checkbox(checked='checked') }}
+                                                {{ checkbox.label() }}
+                                            </div>
+                                        {% endfor %}
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-item d-flex justify-content-between">
+                                            <button class="btn btn-link p-0 check-all" type="button">Všechny</button>
+                                            <button class="btn btn-link p-0 uncheck-all" type="button">Žádné</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
                 <div class="form-row mt-2">
@@ -64,79 +114,81 @@
                 </div>
             </form>
 
-            <div class="results">
-            </div>
+
+        </div>
+    </div>
+    <div class="row justify-content-center mt-3">
+        <div class="results col-md-11">
+        </div>
+    </div>
 
 
-            <!-- File content modal -->
-            <div class="modal fade" id="file-contents-modal" tabindex="-1" role="document">
-                <div class="modal-dialog modal-dialog-scrollable modal-xl">
-                    <div class="modal-content px-1">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="file-content-modal-title"></h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <pre id="file-contents-pre"></pre>
-                        </div>
-                        <div class="modal-footer px-2">
-                            <div class="container-fluid px-0">
-                                <div class="row align-items-center">
-                                    <div class="col-6">
-                                        <input type="text" id="modal-search-input" class="form-control"
-                                               placeholder="Hledat:">
-                                    </div>
-                                    <div class="col-1">
-                                        <button type="button" id="modal-search-prev" class="btn btn-light w-100">
-                                            &larr;
-                                        </button>
-                                    </div>
-                                    <div class="col-1">
-                                        <button type="button" id="modal-search-next" class="btn btn-light w-100">
-                                            &rarr;
-                                        </button>
-                                    </div>
-                                    <div class="col-2">
-                                        <span id="modal-search-info" class="d-inline-block w-100 text-left"></span>
-                                    </div>
-                                    <div class="col-2">
-                                        <button type="button" id="modal-scroll-to-top" class="btn btn-link">
-                                            Nahoru
-                                        </button>
-                                    </div>
-                                </div>
+    <!-- File content modal -->
+    <div class="modal fade" id="file-contents-modal" tabindex="-1" role="document">
+        <div class="modal-dialog modal-dialog-scrollable modal-xl">
+            <div class="modal-content px-1">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="file-content-modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="file-contents-pre"></pre>
+                </div>
+                <div class="modal-footer px-2">
+                    <div class="container-fluid px-0">
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <input type="text" id="modal-search-input" class="form-control"
+                                       placeholder="Hledat:">
+                            </div>
+                            <div class="col-1">
+                                <button type="button" id="modal-search-prev" class="btn btn-light w-100">
+                                    &larr;
+                                </button>
+                            </div>
+                            <div class="col-1">
+                                <button type="button" id="modal-search-next" class="btn btn-light w-100">
+                                    &rarr;
+                                </button>
+                            </div>
+                            <div class="col-2">
+                                <span id="modal-search-info" class="d-inline-block w-100 text-left"></span>
+                            </div>
+                            <div class="col-2">
+                                <button type="button" id="modal-scroll-to-top" class="btn btn-link">
+                                    Nahoru
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- CSV export modal -->
-            <div class="modal fade" id="csv-export-modal" tabindex="-1" role="dialog">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Název exportu</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label for="csv-export-input">Název</label>
-                                <input type="text" class="form-control" id="csv-export-input" value="export">
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
-                            <button type="button" class="btn btn-primary" id="download-csv">Stáhnout</button>
-                        </div>
+    <!-- CSV export modal -->
+    <div class="modal fade" id="csv-export-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Název exportu</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="csv-export-input">Název</label>
+                        <input type="text" class="form-control" id="csv-export-input" value="export">
                     </div>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Zrušit</button>
+                    <button type="button" class="btn btn-primary" id="download-csv">Stáhnout</button>
+                </div>
             </div>
-
         </div>
     </div>
 {% endblock content %}

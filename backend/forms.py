@@ -21,24 +21,25 @@ entity_types_choices = [
 
 
 class SearchForm(FlaskForm):
+    dataset = SelectField('Datová sada:', validators=[DataRequired()],
+                          choices=[("all", "Všechny")] + get_all_datasets(es))
+
+    results_per_page = SelectField("Výsledků na stránku", validators=[DataRequired()],
+                                   choices=[(10, 10), (20, 20), (50, 50), (100, 100)], default=10)
+
     search_terms = FieldList(StringField("Hledat:", validators=[DataRequired(), Length(min=1)],
                                          render_kw={"placeholder": "Zadejte hledaný výraz",
                                                     "oninput": "checkSearchTerm(this)"}),
                              min_entries=1)
-
-    dataset = SelectField('Datová sada:', validators=[DataRequired()],
-                          choices=[("all", "Všechny")] + get_all_datasets(es))
 
     entity_types_list = FieldList(SelectMultipleField("Typ entity", choices=entity_types_choices,
                                                       widget=widgets.Select(),
                                                       option_widget=widgets.CheckboxInput()),
                                   min_entries=1)
 
-    results_per_page = SelectField("Výsledků na stránku", validators=[DataRequired()],
-                                   choices=[(10, 10), (20, 20), (50, 50), (100, 100)], default=10)
-
     submit = SubmitField("Hledat")
 
 
 class EntityTypeForm(FlaskForm):
-    entity_type = SelectField("Typ Entity", validators=[DataRequired()], choices=[("all", "Všechny")] + entity_types_choices)
+    entity_type = SelectField("Typ Entity", validators=[DataRequired()],
+                              choices=[("all", "Všechny")] + entity_types_choices)
