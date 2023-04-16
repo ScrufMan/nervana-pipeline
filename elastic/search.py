@@ -152,7 +152,7 @@ def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_ty
 
     return response
 
-def find_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
+def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
     indices = dataset_to_indices(es, dataset, file_indices=False)
 
     search = Search(using=es, index=indices)

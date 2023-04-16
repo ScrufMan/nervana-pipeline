@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SelectField, SubmitField, FieldList, SelectMultipleField, widgets, FormField
+from wtforms import StringField, SelectField, SubmitField, FieldList, SelectMultipleField, widgets
 from wtforms.validators import DataRequired, Length
 
 from backend import es
-from elastic import get_all_datasets
+from elastic import get_all_datasets, get_stored_fileformats, get_stored_file_languages
 
 entity_types_choices = [
     ("person", "Osoba"),
@@ -36,6 +36,14 @@ class SearchForm(FlaskForm):
                                                       widget=widgets.Select(),
                                                       option_widget=widgets.CheckboxInput()),
                                   min_entries=1)
+
+    file_format_list = FieldList(SelectMultipleField("Formát souboru",
+                                                     choices=list(map(lambda filetype: (filetype, filetype), get_stored_fileformats(es))), widget=widgets.Select(),
+                                                     option_widget=widgets.CheckboxInput()), min_entries=1)
+
+    file_language_list = FieldList(
+        SelectMultipleField("Jazyk souboru", choices=list(map(lambda language: (language, language), get_stored_file_languages(es))),
+                            widget=widgets.Select(), option_widget=widgets.CheckboxInput()), min_entries=1)
 
     submit = SubmitField("Hledat")
 

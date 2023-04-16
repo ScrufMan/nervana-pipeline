@@ -18,9 +18,11 @@ def search():
     page = request.args.get("page", 1, type=int)
 
     dataset = form.dataset.data
+    results_per_page = int(form.results_per_page.data)
     search_terms = form.search_terms.data
     entity_types_list = form.entity_types_list.data
-    results_per_page = int(form.results_per_page.data)
+    file_format_list = form.file_format_list.data
+    file_language_list = form.file_language_list.data
 
     hits = find_entities_with_limit(es, dataset, search_terms, entity_types_list, page, results_per_page)
     total_hits = hits.hits.total.value

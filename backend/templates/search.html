@@ -7,11 +7,11 @@
             <form method="post" action="" id="search-form">
                 {{ form.hidden_tag() }}
                 <div class="form-row justify-content-between align-items-end">
-                    <div class="form-group col-lg-6 col-sm-4">
+                    <div class="form-group col-lg-6 col-md-5 col-sm-4">
                         {{ form.dataset.label() }}
                         {{ form.dataset(class="form-control") }}
                     </div>
-                    <div class="form-group form-inline col-lg-5 col-sm-6">
+                    <div class="form-group form-inline col-lg-5 col-md-5 col-sm-6">
                         {{ form.results_per_page(class="form-control mr-sm-3") }}
                         {{ form.results_per_page.label(class="font-weight-normal") }}
                     </div>
@@ -49,15 +49,15 @@
                             {% endfor %}
                         </div>
                         <div id="entityTypesGroup" class="form-group mt-2 px-0">
-                            {% for entity_types in form.entity_types_list %}
+                            {% for file_format in form.file_format_list %}
                                 <div class="dropdown">
                                     <button class="btn dropdown-toggle p-0" type="button"
                                             data-toggle="dropdown"
                                             aria-haspopup="true" aria-expanded="true">
-                                        {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
+                                        {{ file_format.label(style="cursor: pointer;") }} <span class="caret"></span>
                                     </button>
                                     <div class="dropdown-menu">
-                                        {% for checkbox in entity_types %}
+                                        {% for checkbox in file_format %}
                                             <div class="dropdown-item">
                                                 {{ checkbox(checked='checked') }}
                                                 {{ checkbox.label() }}
@@ -73,15 +73,15 @@
                             {% endfor %}
                         </div>
                         <div id="entityTypesGroup" class="form-group mt-2 px-0">
-                            {% for entity_types in form.entity_types_list %}
+                            {% for file_language in form.file_language_list %}
                                 <div class="dropdown">
                                     <button class="btn dropdown-toggle p-0" type="button"
                                             data-toggle="dropdown"
                                             aria-haspopup="true" aria-expanded="true">
-                                        {{ entity_types.label(style="cursor: pointer;") }} <span class="caret"></span>
+                                        {{ file_language.label(style="cursor: pointer;") }} <span class="caret"></span>
                                     </button>
                                     <div class="dropdown-menu">
-                                        {% for checkbox in entity_types %}
+                                        {% for checkbox in file_language %}
                                             <div class="dropdown-item">
                                                 {{ checkbox(checked='checked') }}
                                                 {{ checkbox.label() }}

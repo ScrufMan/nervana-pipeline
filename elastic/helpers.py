@@ -9,6 +9,18 @@ def get_all_datasets(es: Elasticsearch):
                 not (index["index"].startswith(".") or index["index"].endswith("-entities"))]
     return datasets
 
+def get_stored_fileformats(es: Elasticsearch):
+    indices = dataset_to_indices(es, "all", file_indices=True)
+    formats = es.search(index=indices, body={"aggs": {"formats": {"terms": {"field": "format"}}}})
+    formats = [bucket["key"] for bucket in formats["aggregations"]["formats"]["buckets"]]
+    return formats
+
+def get_stored_file_languages(es: Elasticsearch):
+    indices = dataset_to_indices(es, "all", file_indices=True)
+    languages = es.search(index=indices, body={"aggs": {"languages": {"terms": {"field": "language"}}}})
+    languages = [bucket["key"] for bucket in languages["aggregations"]["languages"]["buckets"]]
+    return languages
+
 
 def dataset_to_indices(es: Elasticsearch, dataset: str, file_indices: bool) -> List[str]:
     if file_indices:

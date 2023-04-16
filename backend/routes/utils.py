@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import tempfile
@@ -7,7 +8,7 @@ from flask import send_file
 
 from backend import app, es
 from backend.forms import SearchForm
-from elastic import get_file, find_entities
+from elastic import get_file, find_all_entities
 from email_analyzer import run_analysis
 
 
@@ -20,7 +21,7 @@ def export_csv():
         search_terms = form.search_terms.data
         entity_types_list = form.entity_types_list.data
 
-        hits = find_entities(es, dataset, search_terms, entity_types_list)
+        hits = find_all_entities(es, dataset, search_terms, entity_types_list)
 
         # Create a temporary file to store the CSV data
         with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as csvfile:
