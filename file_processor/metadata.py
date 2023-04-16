@@ -71,7 +71,7 @@ def get_file_format(content_type, file_path):
             return "unknown"
 
     if '/' in content_type:
-        content_type = content_type.split('/')[1]
+        content_type = content_type.split('/')[1].split(';')[0].lower()
     else:
         return content_type
 

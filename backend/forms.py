@@ -19,6 +19,45 @@ entity_types_choices = [
     ("product", "Produkt")
 ]
 
+language_mappings = {
+    "ar": "Arabský",
+    "bn": "Bengálský",
+    "zh": "Čínský",
+    "cs": "Český",
+    "nl": "Nizozemský",
+    "en": "Anglický",
+    "fr": "Francouzský",
+    "de": "Německý",
+    "el": "Řecký",
+    "hi": "Hindština",
+    "hu": "Maďarština",
+    "id": "Indonéština",
+    "it": "Italský",
+    "ja": "Japonský",
+    "jv": "Jávský",
+    "ko": "Korejský",
+    "ms": "Malajský",
+    "fa": "Perský",
+    "pl": "Polský",
+    "pt": "Portugalský",
+    "pa": "Pandžábský",
+    "ro": "Rumunský",
+    "ru": "Ruský",
+    "sr": "Srbský",
+    "sk": "Slovenský",
+    "sl": "Slovinský",
+    "es": "Španělský",
+    "sv": "Švédský",
+    "tl": "Tagalština",
+    "ta": "Tamilský",
+    "te": "Telugština",
+    "th": "Thajský",
+    "tr": "Turecký",
+    "uk": "Ukrajinský",
+    "ur": "Urdština",
+    "vi": "Vietnamský",
+}
+
 
 class SearchForm(FlaskForm):
     dataset = SelectField('Datová sada:', validators=[DataRequired()],
@@ -42,7 +81,7 @@ class SearchForm(FlaskForm):
                                                      option_widget=widgets.CheckboxInput()), min_entries=1)
 
     file_language_list = FieldList(
-        SelectMultipleField("Jazyk souboru", choices=list(map(lambda language: (language, language), get_stored_file_languages(es))),
+        SelectMultipleField("Jazyk souboru", choices=list(map(lambda language: (language, language_mappings.get(language, language)), get_stored_file_languages(es))),
                             widget=widgets.Select(), option_widget=widgets.CheckboxInput()), min_entries=1)
 
     submit = SubmitField("Hledat")
