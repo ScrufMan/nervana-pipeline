@@ -2,49 +2,86 @@ import csv
 import json
 import os
 import tempfile
+import zipfile
 
 from flask import render_template, request, jsonify
 from flask import send_file
 
 from backend import app, es
 from backend.forms import SearchForm
-from elastic import get_file, find_all_entities
+from elastic import get_file, find_all_entities, get_filepaths_by_ids
 from email_analyzer import run_analysis
 
 
-@app.route("/export-csv", methods=["POST"])
-def export_csv():
+def export_csv(dataset, hits):
+    with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as csvfile:
+        # Add a UTF-8 BOM at the beginning of the file
+        csvfile.write('\ufeff')
+        fieldnames = ['dataset', 'file_id', 'entity_type', 'value', 'lemmatized']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for hit in hits:
+            hit = hit.to_dict()
+            hit["dataset"] = dataset if dataset != "all" else "Všechny"
+            writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
+
+    response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True)
+    return response
+
+
+def export_zip(paths):
+    with tempfile.NamedTemporaryFile('wb', delete=False, suffix='.zip') as temp_zip:
+        with zipfile.ZipFile(temp_zip.name, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+            for file_path in paths:
+                zf.write(file_path, os.path.basename(file_path))
+
+    response = send_file(temp_zip.name, mimetype='application/zip', as_attachment=True)
+    return response
+
+
+def get_files_containing_entities(hits):
+    ids = set()
+    for hit in hits:
+        dataset = hit.meta.index.split("-entities")[0]
+        file_index = f"{dataset}-files"
+        ids.add((file_index, hit["file_id"]))
+    return list(ids)
+
+
+@app.route("/export", methods=["POST"])
+def export():
+    allowed_formats = ["csv", "json", "zip"]
+    export_format = request.args.get("format", "csv", type=str)
+    if export_format not in allowed_formats:
+        return jsonify({"error": f"Export format {export_format} not supported"}), 400
+
     form = SearchForm(request.form)
+    if not form.validate_on_submit():
+        return jsonify({"error": "Form is not valid"}), 400
 
-    if form.validate_on_submit():
-        dataset = form.dataset.data
-        search_terms = form.search_terms.data
-        entity_types_list = form.entity_types_list.data
+    dataset = form.dataset.data
+    search_terms = form.search_terms.data
+    entity_types_list = form.entity_types_list.data
 
-        hits = find_all_entities(es, dataset, search_terms, entity_types_list)
+    hits = find_all_entities(es, dataset, search_terms, entity_types_list)
 
-        # Create a temporary file to store the CSV data
-        with tempfile.NamedTemporaryFile('w', delete=False, encoding='utf-8') as csvfile:
-            # Add a UTF-8 BOM at the beginning of the file
-            csvfile.write('\ufeff')
-            fieldnames = ['dataset', 'file_id', 'entity_type', 'value', 'lemmatized']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-
-            for hit in hits:
-                hit = hit.to_dict()
-                hit["dataset"] = dataset if dataset != "all" else "Všechny"
-                writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
-
-        response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True)
-        return response
+    match export_format:
+        case "csv":
+            return export_csv(dataset, hits)
+        case "json":
+            return jsonify({"error": "JSON export not implemented yet"}), 400
+        case "zip":
+            files = get_files_containing_entities(hits)
+            paths = get_filepaths_by_ids(es, files)
+            return export_zip(paths)
 
 
-@app.route("/file/<string:index>/<string:file_id>")
-def show_file(index, file_id):
-    dataset = index.split("-entities")[0]
+@app.route("/file/<string:dataset>/<string:file_id>")
+def show_file(dataset, file_id):
     file = get_file(es, dataset, file_id)
-
+    if not file:
+        return jsonify({"error": "File not found"}), 404
     path = file["path"]
     plaintext = file["plaintext"]
 

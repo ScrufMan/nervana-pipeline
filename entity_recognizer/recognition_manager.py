@@ -3,9 +3,9 @@ from .spacy import get_entities
 from lingua.language import Language
 from entity_recognizer.post_processor import find_btc_adresses, find_bank_accounts
 
-def find_entities_in_plaintext(plaintext, lang: Language, file_id):
+def find_entities_in_plaintext(plaintext, language: Language, file_id):
 
-    match lang:
+    match language:
         case Language.CZECH | Language.SLOVAK:
             entities_in_file = run_nametag(plaintext, file_id)
         case _:

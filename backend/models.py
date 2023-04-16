@@ -28,7 +28,8 @@ def entities_from_hits(entity_hits, file_hits):
 
         context = tag_term_in_context(entity_hit.context, entity_hit.value)
 
-        entity = FoundEntity(filename, context, entity_hit.meta.index, file_path, entity_hit.file_id)
+        dataset = entity_hit.meta.index.split("-entities")[0]
+        entity = FoundEntity(filename, context, dataset, file_path, entity_hit.file_id)
         entities.append(entity)
 
     return entities

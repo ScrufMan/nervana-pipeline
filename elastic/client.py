@@ -7,8 +7,5 @@ def get_elastic_client():
 
 def test_connection(es):
     # Check if connection can be established
-    try:
-        es.ping()
-        return True
-    except ConnectionError:
-        return False
+    if not es.ping():
+        raise ConnectionError()

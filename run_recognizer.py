@@ -18,7 +18,7 @@ def process_one_file(file_path):
     try:
         file_entry.process_file()
         file_id = index_file(es, DATASET, file_entry)
-        file_entities = find_entities_in_plaintext(file_entry.plaintext, file_entry.lang, file_id)
+        file_entities = find_entities_in_plaintext(file_entry.plaintext, file_entry.language, file_id)
         index_entities(es, DATASET, file_entities)
         print(f"File {file_path} done!")
 
@@ -26,20 +26,35 @@ def process_one_file(file_path):
         print(f"File {file_path}, Error from Tika:", e)
     except NoFileContentError:
         print(f"File {file_path} has no content")
+    except ConnectionError:
+        print(f"Cannot connect to Elasticsearch")
     except Exception as e:
         print(f"Error while processing file {file_path}:", e)
 
 
 def main():
-    files = get_files(sys.argv[1])
+    try:
+        files = get_files(sys.argv[1])
+    except IndexError:
+        print("Please provide a root directory")
+        exit(1)
+    except NotADirectoryError as e:
+        print(e)
+        exit(1)
+    except Exception as e:
+        print("Error while getting files:", e)
+        exit(1)
 
-    es = get_elastic_client()
-
-    if not test_connection(es):
+    try:
+        es = get_elastic_client()
+        test_connection(es)
+        create_index_if_not_exists(es, DATASET)
+    except ConnectionError:
         print("Cannot connect to Elasticsearch")
-        return False
-
-    create_index_if_not_exists(es, DATASET)
+        exit(1)
+    except Exception as e:
+        print("Error while creating index:", e)
+        exit(1)
 
     ncpu = os.cpu_count()
 
@@ -50,7 +65,7 @@ def main():
     for file_path in files:
         process_one_file(file_path)
 
-    return True
+    return 0
 
 
 if __name__ == '__main__':

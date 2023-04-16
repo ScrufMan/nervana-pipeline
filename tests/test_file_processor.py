@@ -492,4 +492,4 @@ Toto oznámení je činěno podle § 16 odst. 8 zákona o bankách. Oznámení b
         file.extract_plaintext()
         file.detect_language()
 
-        self.assertEqual(file.lang, Language.ENGLISH)
+        self.assertEqual(file.language, Language.ENGLISH)

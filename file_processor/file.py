@@ -19,9 +19,9 @@ class File:
         self.path = self.path_obj.__str__()
         self.filename = self.path_obj.name
         self.format = None
-        self.original_plaintext = ""
-        self.plaintext = ""
-        self.lang = None
+        self.original_plaintext = None
+        self.plaintext = None
+        self.language = None
         self.author = None
         self.timestamp = None
 
@@ -42,7 +42,7 @@ class File:
         self.format = get_file_format(metadata.get("Content-Type", "unknown"), self.path)
         self.timestamp = metadata.get("Creation-Date", datetime.now())
         self.author = metadata.get("Author", "Unknown")
-        self.lang = lang_detetctor.detect_language_of(self.plaintext)
+        self.language = lang_detetctor.detect_language_of(self.plaintext)
 
         if FILTER:
             filter_plaintext(self)
@@ -53,7 +53,7 @@ class File:
             "path": self.path,
             "format": self.format,
             "plaintext": self.original_plaintext,
-            "language": self.lang.iso_code_639_1.name.lower(),
+            "language": self.language.iso_code_639_1.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp
         }

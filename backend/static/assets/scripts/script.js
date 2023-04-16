@@ -49,19 +49,21 @@ $(document).ready(function () {
         }, 200);
     });
 
-    $(document).on('click', '#export-csv', function () {
+    $(document).on('click', '#entity-export', function () {
         // Show the filename modal instead of directly downloading the CSV file
-        $('#csv-export-modal').modal('show');
+        $('#entity-export-modal').modal('show');
     });
 
     // Download the CSV file when the download button is clicked in the modal
-    $(document).on('click', '#download-csv', function () {
-        const filename = $('#csv-export-input').val() || 'export.csv';
-        if (originalFormData) {
-            downloadCSV(originalFormData, filename);
-        } else {
-            alert('Something went wrong with form data.');
+    $(document).on('click', '#download-csv', async function () {
+        const filename = $('#entity-export-input').val() || 'export.csv';
+        const entityExportFormat = $('#entity-export-format').val();
+        if (!originalFormData) {
+            alert('Something went wrong with form.');
         }
+
+        await downloadExport(originalFormData, filename, entityExportFormat);
+
         // Close the filename modal
         $('#filename-modal').modal('hide');
     });
@@ -200,8 +202,7 @@ function addSearchCondition() {
 
     // Getting the default input element with id "search_terms-0", cloning it, and modifying its attributes
     const input = $('#search_terms-0').clone().val('').removeAttr('style').attr({
-        'name': `search_terms-${nextFieldIdx}`,
-        'id': `search_terms-${nextFieldIdx}`,
+        'name': `search_terms-${nextFieldIdx}`, 'id': `search_terms-${nextFieldIdx}`,
     }).addClass('rounded-right');
 
     // Getting the default entity types group element with id "entityTypesGroup", cloning it, and modifying its attributes
@@ -232,47 +233,47 @@ function addSearchCondition() {
 
 function loadResults(formData, url) {
     $.ajax({
-        type: 'POST',
-        url: url,
-        data: formData,
-        success: function (data) {
+        type: 'POST', url: url, data: formData, success: function (data) {
             $('.results').html(data.results);
             $('.file-open-link').click(function (e) {
                 e.preventDefault();
                 $.ajax({
-                    type: 'GET',
-                    url: $(this).attr('href'),
-                    success: function (response) {
+                    type: 'GET', url: $(this).attr('href'), success: function (response) {
                         $('#file-content-modal-title').text(response.path);
                         $('#file-contents-pre').text(response.plaintext);
                         $('#file-contents-modal').modal('show');
                     }
                 });
             });
-        },
-        error: function () {
+        }, error: function () {
             alert('Error loading results.');
         }
     });
 }
 
 // Function to download the CSV file
-function downloadCSV(formData, filename) {
-    fetch('/export-csv', {
+const downloadExport = async (formData, filename, format) => {
+    const response = await fetch(`/export?format=${format}`, {
         method: 'POST',
         body: formData,
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-    })
-        .then(response => response.blob())
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-        });
+    });
+
+    if (response.ok) {
+        const data = await response.blob();
+        const url = window.URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+    } else if (response.status === 400) {
+        const errorData = await response.json();
+        alert(errorData.error);
+    } else {
+        alert('An unknown error occurred.');
+    }
 }
 
 function downloadFile(file_path) {

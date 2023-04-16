@@ -152,6 +152,7 @@ def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_ty
 
     return response
 
+
 def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
     indices = dataset_to_indices(es, dataset, file_indices=False)
 
@@ -173,12 +174,23 @@ def get_all_files(es: Elasticsearch, dataset):
     return response
 
 
+def get_filepaths_by_ids(es: Elasticsearch, files):
+    paths = []
+    for index, file_id in files:
+        try:
+            res = es.get(index=index, id=file_id)
+            paths.append(res["_source"]["path"])
+        except Exception as e:
+            print(f"Error retrieving file from elastic: {e}")
+
+    return paths
+
+
 def get_file(es, dataset, file_id):
     index = f"{dataset}-files"
-
     try:
         res = es.get(index=index, id=file_id)["_source"]
-
         return res
     except Exception as e:
-        print(f"Error retrieving document: {e}")
+        print(f"Error retrieving file from elastic: {e}")
+        return None

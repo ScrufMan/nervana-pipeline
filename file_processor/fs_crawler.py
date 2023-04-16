@@ -12,9 +12,9 @@ def get_files(root_dir):
     """
     all_files = []
 
+    # Check if root_dir is a directory
     if not os.path.isdir(root_dir):
-        print(f"{root_dir} is not a directory")
-        return all_files
+        raise NotADirectoryError(f"{root_dir} is not a directory")
 
     wd = os.getcwd()
 

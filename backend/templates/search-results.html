@@ -11,8 +11,8 @@
                 <div class="col-md-10"><span>Nalezeno entit: <b>{{ total_hits }}</b></span>
                 </div>
                 <div class="col-md-2">
-                    <button id="export-csv" class="btn btn-sm btn-light w-100" type="button">
-                        Export CSV
+                    <button id="entity-export" class="btn btn-sm btn-light w-100" type="button">
+                        Export
                     </button>
                 </div>
             </div>
@@ -23,14 +23,13 @@
             <li class="list-group-item mb-2">
                 <div class="row">
                     <div class="col-lg-10 col-md-8">
-                        <h5><a href="#">{{ entity.filename }}</a></h5>
+                        <h5 class="text-primary">{{ entity.filename }}</h5>
                         <p style="letter-spacing: 0.9px;">{{ entity.context|safe }}</p>
                         <small class="text-muted">{{ entity.dataset }}</small>
                     </div>
                     <div class="col-lg-2 col-md-4 d-flex align-items-center">
                         <div class="w-100">
-                            <!-- TODO: use data -->
-                            <a href="{{ url_for("show_file", index=entity.dataset, file_id=entity.file_id) }}"
+                            <a href="{{ url_for("show_file", dataset=entity.dataset, file_id=entity.file_id) }}"
                                target="_blank"
                                class="btn btn-secondary d-block mb-3 file-open-link"
                                style="color:white;">

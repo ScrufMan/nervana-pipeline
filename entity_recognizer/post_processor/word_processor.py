@@ -3,8 +3,8 @@ import requests
 
 def lemmatize_text(text):
     url = "https://lindat.mff.cuni.cz/services/morphodita/api/analyze?output=json&convert_tagset=pdt_to_conll2009"
-    params = {'data': text}
-    response = requests.get(url, params=params)
+    payload = {'data': text}
+    response = requests.post(url, data=payload)
     response.raise_for_status()
     lemmas = response.json()
     if lemmas:
