@@ -1,6 +1,8 @@
 import pathlib
 from datetime import datetime
 
+from .exceptions import *
+
 from lingua import LanguageDetectorBuilder
 from tika import parser
 
@@ -16,7 +18,7 @@ class File:
         self.path_obj = pathlib.PurePath(path)
         self.path = self.path_obj.__str__()
         self.filename = self.path_obj.name
-        self.format = get_file_format(path)
+        self.format = None
         self.original_plaintext = ""
         self.plaintext = ""
         self.lang = None
@@ -24,27 +26,26 @@ class File:
         self.timestamp = None
 
     def process_file(self):
-        try:
-            tika_response = parser.from_file(self.path)
+        tika_response = parser.from_file(self.path)
+        if tika_response["status"] != 200:
+            raise TikaError(f"{tika_response['status']}: {tika_response['statusMessage']}")
 
-            if tika_response["status"] != 200:
-                print(f"Error extracting plaintext from file {self.filename}")
-                return False
+        plaintext = tika_response["content"]
+        if not plaintext:
+            raise NoFileContentError()
 
-            self.plaintext = tika_response["content"]
-            self.original_plaintext = tika_response["content"]
-            self.timestamp = tika_response["metadata"].get("Creation-Date", datetime.now())
-            self.author = tika_response["metadata"].get("Author", None)
-            self.lang = lang_detetctor.detect_language_of(self.plaintext)
+        self.plaintext = plaintext
+        self.original_plaintext = plaintext
 
-            if FILTER:
-                filter_plaintext(self)
+        metadata = tika_response["metadata"]
 
-            return True
+        self.format = get_file_format(metadata.get("Content-Type", "unknown"), self.path)
+        self.timestamp = metadata.get("Creation-Date", datetime.now())
+        self.author = metadata.get("Author", "Unknown")
+        self.lang = lang_detetctor.detect_language_of(self.plaintext)
 
-        except Exception as e:
-            print(f"problem extracting text from file {self.path}:", e)
-            return False
+        if FILTER:
+            filter_plaintext(self)
 
     def make_document(self):
         document = {
