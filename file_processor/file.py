@@ -19,7 +19,6 @@ class File:
         self.path = self.path_obj.__str__()
         self.filename = self.path_obj.name
         self.format = None
-        self.original_plaintext = None
         self.plaintext = None
         self.language = None
         self.author = None
@@ -35,7 +34,6 @@ class File:
             raise NoFileContentError()
 
         self.plaintext = plaintext
-        self.original_plaintext = plaintext
 
         metadata = tika_response["metadata"]
 
@@ -52,7 +50,7 @@ class File:
             "filename": self.filename,
             "path": self.path,
             "format": self.format,
-            "plaintext": self.original_plaintext,
+            "plaintext": self.plaintext,
             "language": self.language.iso_code_639_1.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp

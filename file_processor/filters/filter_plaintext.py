@@ -5,7 +5,6 @@ from .pptx import filter_pptx
 
 
 def filter_plaintext(file):
-    file.original_plaintext = file.original_plaintext.strip()
     filtered_text = generic_filter(file.plaintext)
 
     match file.format:
