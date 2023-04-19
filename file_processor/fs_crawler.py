@@ -1,12 +1,10 @@
 import os
 from typing import List
 
-from .file import File
 
-
-def get_files(root_dir):
+def get_files(root_dir: str) -> List[str]:
     """
-    Finds all files from given root directory
+    Returns all absolute file paths reachable from given root directory
     :param root_dir: relative or absolute path
     :return: List of type File
     """
@@ -16,11 +14,12 @@ def get_files(root_dir):
     if not os.path.isdir(root_dir):
         raise NotADirectoryError(f"{root_dir} is not a directory")
 
-    wd = os.getcwd()
+    # absolute path of current working directory
+    wd_abs = os.getcwd()
 
-    for root, subdirs, files in os.walk(root_dir):
-        for file in files:
-            path = os.path.join(wd, root, file)  # create absolute path
-            all_files.append(path)
+    for root_current, _, files in os.walk(root_dir):
+        for filename in files:
+            file_abs_path: str = os.path.join(wd_abs, root_current, filename)
+            all_files.append(file_abs_path)
 
     return all_files

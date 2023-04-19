@@ -1,72 +1,90 @@
-import os
+import asyncio
 import sys
+from json import JSONDecodeError
+from typing import List, Tuple
 
-from file_processor import *
+from elasticsearch import AsyncElasticsearch
+from elasticsearch.exceptions import ElasticsearchException
+
+from elastic import (
+    get_async_elastic_client,
+    test_connection,
+    assert_indices_exist,
+    index_file,
+    index_entities,
+)
 from entity_recognizer.recognition_manager import find_entities_in_plaintext
-from elastic import get_elastic_client, test_connection, create_index_if_not_exists, index_file, index_entities
-from concurrent.futures import ProcessPoolExecutor
-
+from file_processor import *
 from file_processor.exceptions import *
 
-DATASET = "zachyt_1"
 
-
-def process_one_file(file_path):
-    es = get_elastic_client()
+async def process_one_file(file_path: str, dataset: str):
     file_entry = File(file_path)
 
     try:
-        file_entry.process_file()
-        file_id = index_file(es, DATASET, file_entry)
-        file_entities = find_entities_in_plaintext(file_entry.plaintext, file_entry.language, file_id)
-        index_entities(es, DATASET, file_entities)
-        print(f"File {file_path} done!")
+        async with get_async_elastic_client() as es:
+            await file_entry.process()
+            file_id: str = await index_file(es, dataset, file_entry)
+            file_entities = find_entities_in_plaintext(
+                file_entry.plaintext, file_entry.language, file_id
+            )
+            await index_entities(es, dataset, file_entities)
+            print(f"Processed file {file_path}")
 
     except TikaError as e:
         print(f"File {file_path}, Error from Tika:", e)
     except NoFileContentError:
         print(f"File {file_path} has no content")
     except ConnectionError:
-        print(f"Cannot connect to Elasticsearch")
+        print(f"File {file_path}, Cannot connect to Elasticsearch")
+    except ElasticsearchException as e:
+        print(f"File {file_path}, Elasticsearch error:", e)
     except Exception as e:
-        print(f"Error while processing file {file_path}:", e)
+        print(f"File {file_path}, Unknown error:", e)
 
 
-def main():
+async def run_pipeline(paths: List[str], dataset: str):
     try:
-        files = get_files(sys.argv[1])
-    except IndexError:
-        print("Please provide a root directory")
+        async with get_async_elastic_client() as es:
+            await test_connection(es)
+            await assert_indices_exist(es, dataset)
+
+            tasks = [process_one_file(file_path, dataset) for file_path in paths]
+            await asyncio.gather(*tasks)
+
+    except ConnectionError:
+        print("Cannot connect to Elasticsearch")
         exit(1)
+    except ElasticsearchException as e:
+        print("Elasticsearch error:", e)
+        exit(1)
+    except (FileNotFoundError, JSONDecodeError) as e:
+        print("Error while trying to read config file:", e)
+        exit(1)
+    except Exception as e:
+        print("Unknown error in pipeline:", e)
+        exit(1)
+
+
+def get_cl_arguments() -> Tuple[str, str]:
+    if len(sys.argv) != 3:
+        print("Please provide a root directory and a dataset name")
+        exit(1)
+
+    return sys.argv[1], sys.argv[2]
+
+
+if __name__ == "__main__":
+    root_dir, dataset_name = get_cl_arguments()
+
+    try:
+        file_paths: List[str] = get_files(root_dir)
     except NotADirectoryError as e:
         print(e)
         exit(1)
     except Exception as e:
-        print("Error while getting files:", e)
+        print("Unknown error while getting file paths:", e)
         exit(1)
 
-    try:
-        es = get_elastic_client()
-        test_connection(es)
-        create_index_if_not_exists(es, DATASET)
-    except ConnectionError:
-        print("Cannot connect to Elasticsearch")
-        exit(1)
-    except Exception as e:
-        print("Error while creating index:", e)
-        exit(1)
-
-    ncpu = os.cpu_count()
-
-    # with ProcessPoolExecutor(max_workers=ncpu) as executor:
-    #     for file_path in executor.map(process_one_file, files):
-    #         print(f"File {file_path} done!")
-
-    for file_path in files:
-        process_one_file(file_path)
-
-    return 0
-
-
-if __name__ == '__main__':
-    main()
+    asyncio.run(run_pipeline(file_paths, dataset_name))
+    print("NERvana finished successfully!")

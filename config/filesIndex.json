@@ -1,0 +1,27 @@
+{
+  "mappings": {
+    "properties": {
+      "filename": {
+        "type": "text"
+      },
+      "path": {
+        "type": "text"
+      },
+      "format": {
+        "type": "keyword"
+      },
+      "plaintext": {
+        "type": "text"
+      },
+      "language": {
+        "type": "keyword"
+      },
+      "author": {
+        "type": "text"
+      },
+      "timestamp": {
+        "type": "date"
+      }
+    }
+  }
+}
