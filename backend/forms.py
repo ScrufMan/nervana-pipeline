@@ -77,11 +77,14 @@ class SearchForm(FlaskForm):
                                   min_entries=1)
 
     file_format_list = FieldList(SelectMultipleField("Formát souboru",
-                                                     choices=list(map(lambda filetype: (filetype, filetype), get_stored_fileformats(es))), widget=widgets.Select(),
+                                                     choices=list(map(lambda filetype: (filetype, filetype),
+                                                                      get_stored_fileformats(es))),
+                                                     widget=widgets.Select(),
                                                      option_widget=widgets.CheckboxInput()), min_entries=1)
 
     file_language_list = FieldList(
-        SelectMultipleField("Jazyk souboru", choices=list(map(lambda language: (language, language_mappings.get(language, language)), get_stored_file_languages(es))),
+        SelectMultipleField("Jazyk souboru", choices=list(
+            map(lambda language: (language, language_mappings.get(language, language)), get_stored_file_languages(es))),
                             widget=widgets.Select(), option_widget=widgets.CheckboxInput()), min_entries=1)
 
     submit = SubmitField("Hledat")

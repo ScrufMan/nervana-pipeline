@@ -103,10 +103,10 @@ def create_normal_query(search_term):
     ]
 
 
-def add_entities_query_to_search(search, search_terms, entity_types_list):
-    # Loop through search_terms and entity_types and create a search query for each term
+def add_entities_query_to_search(search, search_terms, entity_types_list, file_format_list, file_language_list):
+    # Loop through search_terms, entity_types, file_format_list, and file_language_list and create a search query for each term
     queries = []
-    for search_term, entity_types in zip(search_terms, entity_types_list):
+    for search_term, entity_types, file_formats, file_languages in zip(search_terms, entity_types_list, file_format_list, file_language_list):
         if search_term.startswith('r:'):
             clause = create_regexp_query(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):
@@ -116,15 +116,28 @@ def add_entities_query_to_search(search, search_terms, entity_types_list):
 
         query = Q(
             "bool",
-            should=clause,
-            filter=[
-                {
-                    "terms": {
-                        "entity_type": entity_types
-                    }
-                }
+            must=[
+                Q(
+                    "nested",
+                    path="entities",
+                    query=Q(
+                        "bool",
+                        should=clause,
+                        filter=[
+                            {
+                                "terms": {
+                                    "entities.entity_type": entity_types
+                                }
+                            }
+                        ],
+                        minimum_should_match=1
+                    )
+                ),
             ],
-            minimum_should_match=1
+            filter=[
+                Q("terms", format=file_formats),
+                Q("terms", language=file_languages)
+            ]
         )
 
         queries.append(query)
@@ -138,7 +151,8 @@ def add_entities_query_to_search(search, search_terms, entity_types_list):
     return search
 
 
-def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
+def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, file_format_list,
+                             file_language_list, page, page_size):
     indices = dataset_to_indices(es, dataset)
 
     search = Search(using=es, index=indices)
@@ -146,7 +160,7 @@ def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_ty
     search_from = (page - 1) * page_size
     search = search[search_from:search_from + page_size]
 
-    search = add_entities_query_to_search(search, search_terms, entity_types_list)
+    search = add_entities_query_to_search(search, search_terms, entity_types_list, file_format_list, file_language_list)
 
     response = search.execute()
 

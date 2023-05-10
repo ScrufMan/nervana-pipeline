@@ -22,7 +22,7 @@ $(document).ready(function () {
     // When the search form is submitted, send an AJAX request to the server
     $('#search-form').submit((event) => {
         event.preventDefault();
-        originalFormData = $(this).serialize();
+        originalFormData = $(event.currentTarget).serialize();
         const searchUrl = '/search'
         loadResults(originalFormData, searchUrl);
     });

@@ -15,12 +15,15 @@ from elastic import (
 from file_processor import *
 from file_processor.exceptions import *
 
+total_entities = 0
 
 async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset_name: str):
+    global total_entities
     file_entry = File(file_path)
     try:
         await file_entry.process()
         await index_file(es, dataset_name, file_entry)
+        total_entities += len(file_entry.entities)
         print(f"Processed file {file_path}")
 
     except TikaError as e:
@@ -82,4 +85,4 @@ if __name__ == "__main__":
         exit(1)
 
     asyncio.run(run_pipeline(file_paths, dataset_name))
-    print("NERvana finished successfully!")
+    print(f"NERvana finished successfully! Total entities indexed: {total_entities}")
