@@ -38,6 +38,6 @@ def search():
     )
 
     results_html = render_template('search-results.html', results=results, pagination=pagination,
-                                   total_hits=total_hits, form=form)
+                                   total_hits=total_hits)
 
     return {'results': results_html}
