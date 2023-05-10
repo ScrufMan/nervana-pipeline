@@ -1,12 +1,11 @@
 import os
-from typing import List
 
 
-def get_files(root_dir: str) -> List[str]:
+def get_files(root_dir: str) -> list[str]:
     """
     Returns all absolute file paths reachable from given root directory
     :param root_dir: relative or absolute path
-    :return: List of type File
+    :return: list of paths
     """
     all_files = []
 

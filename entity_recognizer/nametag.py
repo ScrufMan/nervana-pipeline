@@ -46,7 +46,7 @@ def tokenize_data(data):
         raise Exception(f"Nametag failed with status code {response.status_code}, message: {response.text}")
 
 
-def get_entities(tokenized, file_id):
+def get_entities(tokenized):
     entities = []
 
     soup = BeautifulSoup(tokenized, "html.parser")
@@ -73,14 +73,14 @@ def get_entities(tokenized, file_id):
 
         context = get_context(entity_value, tokenized_entity.parent.text)
 
-        entity = Entity(universal_type, entity_value, lemmatized_value, context, file_id)
+        entity = Entity(universal_type, entity_value, lemmatized_value, context)
         entities.append(entity)
 
     return entities
 
 
-def run_nametag(plaintext, file_id):
+def run_nametag(plaintext: str):
     tokenized = tokenize_data(plaintext)
-    found_entities = get_entities(tokenized, file_id)
+    found_entities = get_entities(tokenized)
 
     return found_entities

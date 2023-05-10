@@ -67,7 +67,7 @@ def get_file_format(content_type, file_path):
     # try to use magic when tika fails
     if content_type == "unknown":
         content_type = mime.from_file(file_path)
-        if not content_type:
+        if not content_type or content_type == "":
             return "unknown"
 
     if '/' in content_type:

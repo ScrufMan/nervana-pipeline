@@ -1,9 +1,10 @@
 import asyncio
 from pathlib import PurePath
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 from entity_recognizer import Entity
+from entity_recognizer.recognition_manager import find_entities_in_plaintext
 from .exceptions import *
 from functools import partial
 from lingua import LanguageDetectorBuilder, Language
@@ -25,8 +26,8 @@ class File:
         self.plaintext: str = ""
         self.language: Optional[Language] = None
         self.author = "unknown"
-        self.timestamp: datetime = datetime.now()
-        self.entities: List[Entity] = []
+        self.timestamp: Optional[datetime] = None
+        self.entities: list[Entity] = []
 
     async def process(self):
         loop = asyncio.get_event_loop()
@@ -48,23 +49,28 @@ class File:
 
         metadata = tika_response["metadata"]
 
-        self.format = get_file_format(metadata.get("Content-Type", "unknown"), self.path)
-        self.timestamp = metadata.get("Creation-Date", datetime.now())
-        self.author = metadata.get("Author", "Unknown")
+        file_type_by_tika = metadata.get("Content-Type", "unknown")
+        self.format = get_file_format(file_type_by_tika, self.path)
+
+        self.timestamp = metadata.get("dcterms:created", datetime.now())
+        self.author = metadata.get("dc:creator", "Unknown")
         self.language = lang_detetctor.detect_language_of(self.plaintext)
 
         if FILTER:
             filter_plaintext(self)
+        try:
+            self.entities = find_entities_in_plaintext(self.plaintext, self.language)
+        except Exception as e:
+            print(f"Error while recognizing entities in file {self.filename}: {e}")
 
     def make_document(self):
-        document = {
+        return {
             "filename": self.filename,
             "path": self.path,
             "format": self.format,
             "plaintext": self.plaintext,
             "language": self.language.iso_code_639_1.name.lower() if self.language else "unknown",
             "author": self.author,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
+            "entities": [entity.make_document() for entity in self.entities]
         }
-
-        return document

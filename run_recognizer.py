@@ -1,7 +1,7 @@
 import asyncio
 import sys
 from json import JSONDecodeError
-from typing import List, Tuple
+from typing import Tuple
 
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ElasticsearchException
@@ -11,23 +11,16 @@ from elastic import (
     test_connection,
     assert_index_exists,
     index_file,
-    index_entities,
 )
-from entity_recognizer.recognition_manager import find_entities_in_plaintext
 from file_processor import *
 from file_processor.exceptions import *
 
 
-async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset: str):
+async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset_name: str):
     file_entry = File(file_path)
-
     try:
         await file_entry.process()
-        file_id: str = await index_file(es, dataset, file_entry)
-        file_entities = find_entities_in_plaintext(
-            file_entry.plaintext, file_entry.language, file_id
-        )
-        await index_entities(es, dataset, file_entities)
+        await index_file(es, dataset_name, file_entry)
         print(f"Processed file {file_path}")
 
     except TikaError as e:
@@ -42,13 +35,13 @@ async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset: str)
         print(f"File {file_path}, Unknown error:", e)
 
 
-async def run_pipeline(paths: List[str], dataset: str):
+async def run_pipeline(paths: list[str], dataset_name: str):
     es = get_async_elastic_client()
     try:
         await test_connection(es)
-        await assert_index_exists(es, dataset)
+        await assert_index_exists(es, dataset_name)
 
-        tasks = [process_one_file(es, file_path, dataset) for file_path in paths]
+        tasks = [process_one_file(es, file_path, dataset_name) for file_path in paths]
         await asyncio.gather(*tasks)
 
     except ConnectionError:
@@ -80,7 +73,7 @@ if __name__ == "__main__":
     root_dir, dataset_name = get_cl_arguments()
 
     try:
-        file_paths: List[str] = get_files(root_dir)
+        file_paths: list[str] = get_files(root_dir)
     except NotADirectoryError as e:
         print(e)
         exit(1)
