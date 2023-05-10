@@ -10,22 +10,15 @@ from entity_recognizer import Entity
 from file_processor import File
 
 
-async def assert_index_exists(es: AsyncElasticsearch, index_name: str, config_path: str):
+async def assert_index_exists(es: AsyncElasticsearch, index_name: str):
     if await es.indices.exists(index=index_name):
         return
 
-    with open(config_path) as config_file:
-        config = json.load(config_file)
-    await es.indices.create(index=index_name, body=config)
-
-
-async def assert_indices_exist(es: AsyncElasticsearch, dataset: str):
     wd_abs = os.getcwd()
-    tasks = [
-        assert_index_exists(es, f"{dataset}-files", os.path.join(wd_abs, "config/filesIndex.json")),
-        assert_index_exists(es, f"{dataset}-entities", os.path.join(wd_abs, "config/entitiesIndex.json"))
-    ]
-    await asyncio.gather(*tasks)
+    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
+        index_settings = json.load(config_file)["index"]
+
+    await es.indices.create(index=index_name, body=index_settings)
 
 
 async def index_file(es: AsyncElasticsearch, dataset: str, file: File) -> str:

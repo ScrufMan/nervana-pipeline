@@ -9,7 +9,7 @@ from elasticsearch.exceptions import ElasticsearchException
 from elastic import (
     get_async_elastic_client,
     test_connection,
-    assert_indices_exist,
+    assert_index_exists,
     index_file,
     index_entities,
 )
@@ -18,18 +18,17 @@ from file_processor import *
 from file_processor.exceptions import *
 
 
-async def process_one_file(file_path: str, dataset: str):
+async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset: str):
     file_entry = File(file_path)
 
     try:
-        async with get_async_elastic_client() as es:
-            await file_entry.process()
-            file_id: str = await index_file(es, dataset, file_entry)
-            file_entities = find_entities_in_plaintext(
-                file_entry.plaintext, file_entry.language, file_id
-            )
-            await index_entities(es, dataset, file_entities)
-            print(f"Processed file {file_path}")
+        await file_entry.process()
+        file_id: str = await index_file(es, dataset, file_entry)
+        file_entities = find_entities_in_plaintext(
+            file_entry.plaintext, file_entry.language, file_id
+        )
+        await index_entities(es, dataset, file_entities)
+        print(f"Processed file {file_path}")
 
     except TikaError as e:
         print(f"File {file_path}, Error from Tika:", e)
@@ -44,13 +43,13 @@ async def process_one_file(file_path: str, dataset: str):
 
 
 async def run_pipeline(paths: List[str], dataset: str):
+    es = get_async_elastic_client()
     try:
-        async with get_async_elastic_client() as es:
-            await test_connection(es)
-            await assert_indices_exist(es, dataset)
+        await test_connection(es)
+        await assert_index_exists(es, dataset)
 
-            tasks = [process_one_file(file_path, dataset) for file_path in paths]
-            await asyncio.gather(*tasks)
+        tasks = [process_one_file(es, file_path, dataset) for file_path in paths]
+        await asyncio.gather(*tasks)
 
     except ConnectionError:
         print("Cannot connect to Elasticsearch")
@@ -64,6 +63,9 @@ async def run_pipeline(paths: List[str], dataset: str):
     except Exception as e:
         print("Unknown error in pipeline:", e)
         exit(1)
+
+    finally:
+        await es.close()
 
 
 def get_cl_arguments() -> Tuple[str, str]:
