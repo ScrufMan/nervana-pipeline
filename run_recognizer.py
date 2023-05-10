@@ -8,7 +8,7 @@ from elasticsearch.exceptions import ElasticsearchException
 
 from elastic import (
     get_async_elastic_client,
-    test_connection,
+    test_connection_async,
     assert_index_exists,
     index_file,
 )
@@ -38,7 +38,7 @@ async def process_one_file(es: AsyncElasticsearch, file_path: str, dataset_name:
 async def run_pipeline(paths: list[str], dataset_name: str):
     es = get_async_elastic_client()
     try:
-        await test_connection(es)
+        await test_connection_async(es)
         await assert_index_exists(es, dataset_name)
 
         tasks = [process_one_file(es, file_path, dataset_name) for file_path in paths]

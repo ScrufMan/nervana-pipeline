@@ -139,7 +139,7 @@ def add_entities_query_to_search(search, search_terms, entity_types_list):
 
 
 def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
-    indices = dataset_to_indices(es, dataset, file_indices=False)
+    indices = dataset_to_indices(es, dataset)
 
     search = Search(using=es, index=indices)
 

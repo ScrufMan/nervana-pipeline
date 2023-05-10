@@ -4,12 +4,14 @@ from elasticsearch import AsyncElasticsearch, Elasticsearch
 import json
 
 
-def get_elastic_client() -> Elasticsearch:
+def get_sync_elastic_client() -> Elasticsearch:
     # absolute path of current working directory
     wd_abs = os.getcwd()
+
     with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
         config = json.load(config_file)
-    return Elasticsearch([config["host"], config["port"]], timeout=60)
+    url = f"http://{config['host']}:{config['port']}"
+    return Elasticsearch(url, timeout=60)
 
 
 def get_async_elastic_client() -> AsyncElasticsearch:
@@ -23,8 +25,15 @@ def get_async_elastic_client() -> AsyncElasticsearch:
     return AsyncElasticsearch(url, timeout=60)
 
 
-async def test_connection(es: AsyncElasticsearch):
+async def test_connection_async(es: AsyncElasticsearch):
     # Check if connection can be established
     can_connect = await es.ping()
+    if not can_connect:
+        raise ConnectionError()
+
+
+def test_connection_sync(es: Elasticsearch):
+    # Check if connection can be established
+    can_connect = es.ping()
     if not can_connect:
         raise ConnectionError()

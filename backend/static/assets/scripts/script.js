@@ -16,11 +16,11 @@ $(document).ready(function () {
         dropdown.find('input[type="checkbox"]').prop('checked', false);
     });
 
-    // Preserve form data when modifying form until form is submitted
+    // Preserve form data when modifying form until it is submitted
     let originalFormData;
 
     // When the search form is submitted, send an AJAX request to the server
-    $('#search-form').submit(function (event) {
+    $('#search-form').submit((event) => {
         event.preventDefault();
         originalFormData = $(this).serialize();
         const searchUrl = '/search'
@@ -226,7 +226,7 @@ function addSearchCondition() {
     nextFieldIdx++;
 }
 
-function loadResults(formData, url) {
+const loadResults = (formData, url) => {
     $.ajax({
         type: 'POST', url: url, data: formData, success: function (data) {
             $('.results').html(data.results);
@@ -240,9 +240,8 @@ function loadResults(formData, url) {
                     }
                 });
             });
-        }, error: function () {
-            alert('Error loading results.');
-        }
+        }, error: () => alert('Error loading results.')
+
     });
 }
 

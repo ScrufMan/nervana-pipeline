@@ -11,10 +11,11 @@ from elastic import find_entities_with_limit, get_all_files
 def search():
     form = SearchForm(request.form)
 
+    # initial page load or invalid form data
     if request.method == "GET" or not form.validate_on_submit():
         return render_template("search.html", form=form)
 
-    # Handle api call for ajax
+    # form submitted
     page = request.args.get("page", 1, type=int)
 
     dataset = form.dataset.data

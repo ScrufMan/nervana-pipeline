@@ -1,4 +1,4 @@
-from elastic.client import get_async_elastic_client, get_elastic_client, test_connection
+from elastic.client import get_async_elastic_client, get_sync_elastic_client, test_connection_async, test_connection_sync
 from elastic.index_data import assert_index_exists, index_file
 from elastic.search import find_entities_with_limit, find_all_entities, get_all_files, get_file, get_filepaths_by_ids
 from elastic.helpers import get_all_datasets, get_stored_fileformats, get_stored_file_languages
