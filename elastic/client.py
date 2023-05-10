@@ -1,7 +1,15 @@
 import os
 
-from elasticsearch import AsyncElasticsearch
+from elasticsearch import AsyncElasticsearch, Elasticsearch
 import json
+
+
+def get_elastic_client() -> Elasticsearch:
+    # absolute path of current working directory
+    wd_abs = os.getcwd()
+    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
+        config = json.load(config_file)
+    return Elasticsearch([config], timeout=60)
 
 
 def get_async_elastic_client() -> AsyncElasticsearch:

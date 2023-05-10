@@ -1,9 +1,8 @@
 from flask import Flask
-from elastic import get_async_elastic_client, test_connection
+from elastic import get_async_elastic_client, get_elastic_client
 
 try:
-    es = get_async_elastic_client()
-    test_connection(es)
+    es = get_elastic_client()
 except ConnectionError:
     print("Cannot connect to Elasticsearch")
     exit(1)

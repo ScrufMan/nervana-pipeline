@@ -104,7 +104,7 @@ def update_graph():
 
     most_common_entity_type = request.args.get("entity_type", "all")
 
-    entities_search = Search(using=es, index="zachyt_1-entities")
+    entities_search = Search(using=es, index="testovaci_dataset-entities")
 
     if most_common_entity_type != "all":
         entities_search = entities_search.filter('term', entity_type=most_common_entity_type)

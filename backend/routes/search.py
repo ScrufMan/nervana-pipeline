@@ -35,7 +35,6 @@ def search():
         total=total_hits,
         per_page=results_per_page,
         css_framework='bootstrap4',
-        link_attr={'class': 'my-link-class'}
     )
 
     results_html = render_template('search-results.html', results=results, pagination=pagination,

@@ -186,13 +186,8 @@ function checkSearchTerm(input) {
 let nextFieldIdx = 1;
 
 function addSearchCondition() {
-    // Creating a new row element with classes "form-row", "justify-content-between", and "align-items-center"
     const row = $('<div></div>').addClass('form-row justify-content-between align-items-center');
-
-    // Creating a new search group element with classes "input-group" and "col-md-7"
-    const searchGroup = $('<div></div>').addClass('input-group col-md-7');
-
-    // Creating a new prepend div element with classes "input-group-prepend" and "d-block"
+    const searchGroup = $('<div></div>').addClass('input-group col-lg-6');
     const prependDiv = $('<div></div>').addClass('input-group-prepend d-block');
 
     const button = $('<button></button>').addClass('btn btn-outline-secondary').attr('type', 'button').click(() => {

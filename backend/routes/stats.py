@@ -26,8 +26,8 @@ def stats():
 
     form = EntityTypeForm()
 
-    files_search = Search(using=es, index="zachyt_1-files")
-    entities_search = Search(using=es, index="zachyt_1-entities")
+    files_search = Search(using=es, index="testovaci_dataset-files")
+    entities_search = Search(using=es, index="testovaci_dataset-entities")
 
     # Aggregations for graph data
     files_search.aggs.bucket("file_formats", "terms", field="format")
@@ -48,7 +48,7 @@ def stats():
     entity_types = [bucket.to_dict() for bucket in entity_types]
     entity_types = list(map(lambda bucket: {**bucket, "key": entity_type_to_czech[bucket["key"]]}, entity_types))
 
-    files = list(get_all_files(es, "zachyt_1"))
+    files = list(get_all_files(es, "testovaci_dataset"))
     filenames = {file.meta.id: file["filename"] for file in files}
     file_entities = [{**bucket.to_dict(), 'filename': filenames[bucket['key']]} for bucket in
                      entities_response.aggregations.file_entities.buckets]

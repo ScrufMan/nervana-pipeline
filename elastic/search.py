@@ -4,7 +4,7 @@ from .helpers import dataset_to_indices
 from entity_recognizer.post_processor import lemmatize_text
 
 
-def handle_regexp(search_term):
+def create_regexp_query(search_term):
     return [
         {
             "regexp": {
@@ -19,7 +19,7 @@ def handle_regexp(search_term):
     ]
 
 
-def handle_exact(search_term):
+def create_exact_match_query(search_term):
     exact_term = search_term[1:-1]
     return [
         {
@@ -35,7 +35,7 @@ def handle_exact(search_term):
     ]
 
 
-def handle_normal(search_term):
+def create_normal_query(search_term):
     if search_term == "*":
         return [
             {
@@ -108,11 +108,11 @@ def add_entities_query_to_search(search, search_terms, entity_types_list):
     queries = []
     for search_term, entity_types in zip(search_terms, entity_types_list):
         if search_term.startswith('r:'):
-            clause = handle_regexp(search_term)
+            clause = create_regexp_query(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):
-            clause = handle_exact(search_term)
+            clause = create_exact_match_query(search_term)
         else:
-            clause = handle_normal(search_term)
+            clause = create_normal_query(search_term)
 
         query = Q(
             "bool",
