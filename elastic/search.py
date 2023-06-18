@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
 from .helpers import dataset_to_indices
-from entity_recognizer.post_processor import lemmatize_text
+from entity_recognizer.post_processor import Lemmatizer
 
 
 def create_regexp_query(search_term):

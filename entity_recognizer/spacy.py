@@ -1,30 +1,36 @@
 import spacy
 
+from .entity import Entity
+from .helper import get_context
+
 SPACY_TO_UNIVERSAL = {
     "PERSON": "person",
-    "pc": "person",
-    "pf": "person",
-    "pp": "person",
-    "p_": "person",
-    "pm": "person",
-    "ps": "person",
-    "A": "adress",
-    "ah": "adress",
-    "az": "adress",
-    "gs": "adress",
-    "gu": "city",
-    "gc": "state",
-    "at": "phone",
-    "me": "email",
-    "mi": "link",
-    "if": "company",
-    "io": "government"
+    "GPE": "location",
+    "LOC": "location",
+    "ORG": "organization",
+    "PRODUCT": "product",
+    "MONEY": "product",
+    "WORK_OF_ART": "product",
+    "EVENT": "product",
+    "LAW": "document",
+    "DATE": "datetime",
+    "TIME": "datetime",
+    "FAC": "location",
+    "NORP": "organization",
 }
 
 
 def get_entities(data):
+    entities = []
     nlp = spacy.load("en_core_web_sm")
-    tokens = nlp(data)
+    doc = nlp(data)
+    for ent in doc.ents:
+        value = ent.text
+        universal_type = SPACY_TO_UNIVERSAL.get(ent.label_, "unknown")
+        if universal_type == "unknown":
+            continue
+        context = get_context(value, data)
+        entity = Entity(universal_type, value, ent.lemma_, context)
+        entities.append(entity)
 
-    for token in tokens.ents:
-        print(token)
+    return entities

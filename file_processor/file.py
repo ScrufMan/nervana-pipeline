@@ -3,6 +3,8 @@ from pathlib import PurePath
 from datetime import datetime
 from typing import Optional
 
+from httpx import AsyncClient
+
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_plaintext
 from .exceptions import *
@@ -14,7 +16,7 @@ from .filters import filter_plaintext
 from .metadata import get_file_format
 
 FILTER = True
-lang_detetctor = LanguageDetectorBuilder.from_all_languages().build()
+lang_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
 class File:
@@ -29,7 +31,7 @@ class File:
         self.timestamp: Optional[datetime] = None
         self.entities: list[Entity] = []
 
-    async def process(self):
+    async def process(self, client: AsyncClient):
         loop = asyncio.get_event_loop()
         tika_parser = partial(parser.from_file, self.path)
         tika_response = await loop.run_in_executor(None, tika_parser)
@@ -44,7 +46,10 @@ class File:
         if not isinstance(content, str):
             raise TikaError("Tika returned unknown content")
 
-        plaintext: str = content.strip()
+        plaintext: str = content
+        if FILTER:
+            plaintext = filter_plaintext(self.format, plaintext)
+
         self.plaintext = plaintext
 
         metadata = tika_response["metadata"]
@@ -54,14 +59,13 @@ class File:
 
         self.timestamp = metadata.get("dcterms:created", datetime.now())
         self.author = metadata.get("dc:creator", "Unknown")
-        self.language = lang_detetctor.detect_language_of(self.plaintext)
+        self.language = lang_detector.detect_language_of(self.plaintext)
 
-        if FILTER:
-            filter_plaintext(self)
         try:
-            self.entities = find_entities_in_plaintext(self.plaintext, self.language)
+            self.entities = await find_entities_in_plaintext(client, self.plaintext, self.language)
         except Exception as e:
             print(f"Error while recognizing entities in file {self.filename}: {e}")
+            raise
 
     def make_document(self):
         return {
@@ -74,3 +78,9 @@ class File:
             "timestamp": self.timestamp,
             "entities": [entity.make_document() for entity in self.entities]
         }
+
+    def __str__(self):
+        return f"File({self.filename})"
+
+    def __repr__(self):
+        return self.__str__()

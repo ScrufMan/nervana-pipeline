@@ -1,14 +1,16 @@
 import json
 
 from bs4 import BeautifulSoup
-import requests
-import re
-from entity_recognizer.helper import get_context
-from entity_recognizer.post_processor import lemmatize_text
+from ufal.morphodita import *
+
+from httpx import AsyncClient
+
+from .helper import get_context
 
 from .entity import Entity
+from .post_processor.lemmatizer import Lemmatizer
 
-BASE_URL = "https://lindat.mff.cuni.cz/services/nametag/api"
+tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
 NAMETAG_TO_UNIVERSAL = {
     "P": "person",
@@ -36,14 +38,15 @@ NAMETAG_TO_UNIVERSAL = {
 }
 
 
-def tokenize_data(data):
-    url = f"{BASE_URL}/recognize"
-    payload = {'data': data}
-    response = requests.post(url, data=payload)
-    if response.status_code == 200:
+async def tokenize_data(client: AsyncClient, data: str):
+    # get base url from config
+    with open("./config/nametag.json", "r") as config_file:
+        base_url = json.load(config_file)["URL"]
+        url = f"{base_url}/recognize"
+        payload = {'data': data}
+        response = await client.post(url, data=payload)
+        response.raise_for_status()
         return response.json()['result']
-    else:
-        raise Exception(f"Nametag failed with status code {response.status_code}, message: {response.text}")
 
 
 def get_entities(tokenized):
@@ -66,7 +69,7 @@ def get_entities(tokenized):
         entity_value = tokenized_entity.text
 
         try:
-            lemmatized_value = lemmatize_text(entity_value)
+            lemmatized_value = Lemmatizer.lemmatize_text(entity_value, tagger)
         except Exception as e:
             print(f"Failed to lemmatize {entity_value}, error: {e}")
             lemmatized_value = entity_value
@@ -79,8 +82,8 @@ def get_entities(tokenized):
     return entities
 
 
-def run_nametag(plaintext: str):
-    tokenized = tokenize_data(plaintext)
+async def run_nametag(client: AsyncClient, plaintext: str):
+    tokenized = await tokenize_data(client, plaintext)
     found_entities = get_entities(tokenized)
 
     return found_entities
