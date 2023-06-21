@@ -7,6 +7,7 @@ from json import JSONDecodeError
 from typing import Tuple
 
 import httpx
+import requests
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 from httpx import AsyncClient
@@ -18,9 +19,11 @@ from elastic import (
     index_file,
 )
 from file_processor import *
-from file_processor.exceptions import *
+from exceptions import *
 
-sem = asyncio.Semaphore(4)
+sem = asyncio.Semaphore(os.cpu_count())
+
+entities_count_lock = asyncio.Lock()
 total_entities = 0
 
 
@@ -28,24 +31,29 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, file_pat
     global total_entities
     file_entry = File(file_path)
     try:
+        print(f"Processing {file_entry.path}", flush=True)
         await file_entry.process(client)
+
+        if not file_entry.valid:
+            print(f"{file_entry.path} could not be processed")
+            return
+
         await index_file(es, dataset_name, file_entry)
-        total_entities += len(file_entry.entities)
-        print(f"Processed file {file_path}", flush=True)
+
+        async with entities_count_lock:
+            total_entities += len(file_entry.entities)
+        print(f"{file_entry.path} finished with {len(file_entry.entities)} entities", flush=True)
 
     except TikaError as e:
-        print(f"File {file_path}, Error from Tika:", e)
-    except NoFileContentError:
-        print(f"File {file_path} has no content")
+        print(f"File {file_entry.path}, Error from Tika:", e, file=sys.stderr)
     except ConnectionError:
-        print(f"File {file_path}, Cannot connect to Elasticsearch")
+        print(f"File {file_entry.path}, Cannot connect to Elasticsearch", file=sys.stderr)
     except ElasticsearchException as e:
-        print(f"File {file_path}, Elasticsearch error:", e)
-    except httpx.ReadTimeout:
-        # retry
-        await process_one_file(es, client, file_path, dataset_name)
-
+        print(f"File {file_entry.path}, Elasticsearch error:", e, file=sys.stderr)
+    except (httpx.ReadTimeout, requests.exceptions.ReadTimeout):
+        print(f"File {file_entry.path}, Read timeout", file=sys.stderr)
     except Exception as e:
+        print(f"File {file_entry.path}, Unknown error:", e, file=sys.stderr)
         raise
 
 
@@ -57,7 +65,8 @@ async def safe_process(es: AsyncElasticsearch, client: AsyncClient, file_path: s
 async def run_pipeline(paths: list[str], dataset_name: str):
     es = get_async_elastic_client()
     try:
-        timeout = httpx.Timeout(120)
+        # larger files need more time to be processed
+        timeout = httpx.Timeout(200)
         async with httpx.AsyncClient(timeout=timeout) as client:
             print("Initializing NERvana...")
             await initialize_nametag(client)
@@ -80,9 +89,6 @@ async def run_pipeline(paths: list[str], dataset_name: str):
     except httpx.HTTPStatusError as e:
         print("Error while trying to connect to Nametag:", e, file=sys.stderr)
         exit(1)
-    except Exception as e:
-        print("Unknown error in pipeline:", e, file=sys.stderr)
-        raise
 
     finally:
         await es.close()

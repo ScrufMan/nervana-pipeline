@@ -9,6 +9,7 @@ from .helper import get_context
 
 from .entity import Entity
 from .post_processor.lemmatizer import Lemmatizer
+from lingua.language import Language
 
 tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
@@ -38,13 +39,14 @@ NAMETAG_TO_UNIVERSAL = {
 }
 
 
-async def tokenize_data(client: AsyncClient, data: str):
+async def tokenize_data(client: AsyncClient, data: str, language: Language):
     # get base url from config
     with open("./config/nametag.json", "r") as config_file:
         base_url = json.load(config_file)["URL"]
         url = f"{base_url}/recognize"
+        model = "english-conll-200831" if language == Language.ENGLISH else "czech-cnec2.0-200831"
         payload = {'data': data}
-        response = await client.post(url, data=payload)
+        response = await client.post(url, data=payload, params={"model": model})
         response.raise_for_status()
         return response.json()['result']
 
@@ -82,8 +84,8 @@ def get_entities(tokenized):
     return entities
 
 
-async def run_nametag(client: AsyncClient, plaintext: str):
-    tokenized = await tokenize_data(client, plaintext)
+async def run_nametag(client: AsyncClient, plaintext: str, language: Language):
+    tokenized = await tokenize_data(client, plaintext, language)
     found_entities = get_entities(tokenized)
 
     return found_entities

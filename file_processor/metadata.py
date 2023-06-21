@@ -1,3 +1,5 @@
+import sys
+
 import magic
 
 mime_mappings = {
@@ -28,11 +30,11 @@ mime_mappings = {
     'vnd.oasis.opendocument.spreadsheet': 'ods',
     'vnd.oasis.opendocument.presentation': 'odp',
     'zip': 'zip',
-    'x-rar-compressed': 'rar',
-    'x-7z-compressed': '7z',
-    'x-tar': 'tar',
-    'x-gzip': 'gz',
-    'x-bzip2': 'bz2',
+    'x-rar-compressed': 'zip',
+    'x-7z-compressed': 'zip',
+    'x-tar': 'zip',
+    'x-gzip': 'zip',
+    'x-bzip2': 'zip',
     'x-xz': 'xz',
     'x-msdownload': 'exe',
     'x-shockwave-flash': 'swf',
@@ -56,24 +58,32 @@ mime_mappings = {
     'x-midi': 'mid',
     'x-aiff': 'aif',
     'x-mpegurl': 'm3u',
+    'vnd.ms-spreadsheetml': 'xls',
 }
 
 # create a magic object
 mime = magic.Magic(mime=True)
 
 
-# define a function to get the file format
-def get_file_format(content_type, file_path):
+def get_file_format(metadata, file_path):
+    # tika
+    content_type = metadata.get("Content-Type", "unknown")
     # try to use magic when tika fails
     if content_type == "unknown":
         content_type = mime.from_file(file_path)
-        if not content_type or content_type == "":
+        if not content_type:
             return "unknown"
 
+    if isinstance(content_type, list):
+        content_type = content_type[0]
     if '/' in content_type:
         content_type = content_type.split('/')[1].split(';')[0].lower()
-    else:
-        return content_type
 
-    file_format = mime_mappings.get(content_type, "unknown")
-    return file_format
+    if content_type in mime_mappings.values():
+        return content_type
+    elif content_type in mime_mappings.keys():
+        return mime_mappings[content_type]
+
+    print(f"Unknown file format: {content_type}", file=sys.stderr)
+    return "unknown"
+

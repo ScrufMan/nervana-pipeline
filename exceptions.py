@@ -1,0 +1,2 @@
+class TikaError(Exception):
+    pass
