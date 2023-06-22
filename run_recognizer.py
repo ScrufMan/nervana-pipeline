@@ -116,7 +116,7 @@ if __name__ == "__main__":
     root_dir, dataset_name = get_cl_arguments()
 
     try:
-        file_paths: list[str] = get_files(root_dir)
+        files_paths: list[str] = get_files(root_dir)
     except NotADirectoryError as e:
         print(e)
         exit(1)
@@ -125,7 +125,8 @@ if __name__ == "__main__":
         exit(1)
 
     start_time = time.time()
-    asyncio.run(run_pipeline(file_paths, dataset_name))
+    asyncio.run(run_pipeline(files_paths, dataset_name))
 
     duration = time.time() - start_time
-    print(f"NERvana finished in {duration:.2f} seconds! Total entities indexed: {total_entities}")
+    print(
+        f"NERvana finished in {duration:.2f} seconds! Total entities indexed: {total_entities}. Average entities per file: {total_entities // len(files_paths)}")
