@@ -21,7 +21,7 @@ from elastic import (
 from file_processor import *
 from exceptions import *
 
-sem = asyncio.Semaphore(os.cpu_count())
+sem = asyncio.Semaphore(6)
 
 entities_count_lock = asyncio.Lock()
 total_entities = 0
