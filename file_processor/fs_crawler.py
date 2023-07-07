@@ -11,7 +11,7 @@ def get_files(root_dir: str) -> list[str]:
 
     # Check if root_dir is a directory
     if not os.path.isdir(root_dir):
-        raise NotADirectoryError(f"{root_dir} is not a directory")
+        raise NotADirectoryError()
 
     # absolute path of current working directory
     wd_abs = os.getcwd()

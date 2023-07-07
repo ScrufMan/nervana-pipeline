@@ -1,12 +1,16 @@
 import math
+import sys
 
 import cv2
+import keras_ocr
 import numpy as np
-from pytesseract import pytesseract
 from deskew import determine_skew
-from .metadata import get_text_languages
-from lingua import Language
+from lingua import Language, ConfidenceValue
+from pytesseract import pytesseract
+
 from .common import blocking_to_async
+from .filters import generic_filter
+from .metadata import get_text_languages
 
 LINGUA_TO_TESSERACT = {
     Language.CZECH: "ces",
@@ -48,7 +52,10 @@ def grayscale(image):
 # noise removal
 def remove_noise(image):
     kernel = np.ones((1, 1), np.uint8)
-    image = cv2.fastNlMeansDenoisingColored(image, None, 10, 10, 7, 15)
+    image = cv2.dilate(image, kernel, iterations=1)
+    image = cv2.erode(image, kernel, iterations=1)
+    image = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
+    image = cv2.medianBlur(image, 3)
     return image
 
 
@@ -96,22 +103,75 @@ def preprocess(image_path):
                          cv2.IMREAD_UNCHANGED)
 
     image = deskew(image)
-    image = remove_noise(image)
     image = grayscale(image)
-    image = thresholding(image)
-    image = remove_borders(image)
+    # image = remove_noise(image)
+    # image = thresholding(image)
+    # image = remove_borders(image)
     return image
+
+
+async def run_tesseract(preprocessed_image, langs):
+    lang_str = "+".join(langs)
+    text_raw = await blocking_to_async(pytesseract.image_to_string, preprocessed_image, lang=lang_str)
+    text = generic_filter(text_raw, oneline=True)
+    return text
+
+
+async def run_keras(preprocessed_image):
+    keras_pipeline = keras_ocr.pipeline.Pipeline()
+    keras_img = keras_ocr.tools.read(preprocessed_image)
+    prediction_groups = await blocking_to_async(keras_pipeline.recognize, [keras_img])
+    detected_img = prediction_groups[0]
+    raw_text = " ".join(map(lambda x: x[0], detected_img))
+    text = generic_filter(raw_text, oneline=True)
+    return text
+
+
+def get_most_probable_langs(langs_tess: list[ConfidenceValue], langs_keras: list[ConfidenceValue]) -> str:
+    if not langs_tess and not langs_keras:
+        return ""
+
+    if not langs_tess:
+        return "keras"
+
+    if not langs_keras:
+        return "tesseract"
+
+    return "keras" if langs_keras[0].value > langs_tess[0].value else "tesseract"
 
 
 async def extract_using_ocr(image_path):
     image = preprocess(image_path)
-    text = await blocking_to_async(pytesseract.image_to_string, image, lang='ces+eng')
+    # assuming most of the text is in czech with some english
+    tesseract_text = await run_tesseract(image, ["ces", "eng"])
+    keras_text = await run_keras(image)
 
-    langs = get_text_languages(text)
-    if langs[0] == "unknown":
-        return None
+    langs_tess = get_text_languages(tesseract_text)
+    langs_keras = get_text_languages(keras_text)
 
-    langs = list(map(lambda x: LINGUA_TO_TESSERACT[x], filter(lambda x: x in LINGUA_TO_TESSERACT, langs)))
-    lang_str = "+".join(langs)
-    text = await blocking_to_async(pytesseract.image_to_string, image, lang=lang_str)
+    better_model = get_most_probable_langs(langs_tess, langs_keras)
+    if not better_model:
+        # all models failed to obtained meaningful text
+        print(f"{image_path} OCR found no useful text", file=sys.stderr)
+        return None, None
+
+    langs = langs_keras if better_model == "keras" else langs_tess
+
+    # convert most probable language to tesseract language code
+    tesseract_langs_code = list(
+        map(lambda x: LINGUA_TO_TESSERACT[x.language], filter(lambda x: x.language in LINGUA_TO_TESSERACT, langs)))
+
+    # run tesseract again with the most probable languages
+    tesseract_text = await run_tesseract(image, tesseract_langs_code)
+    langs_tess = get_text_languages(tesseract_text)
+
+    better_model = get_most_probable_langs(langs_tess, langs_keras)
+    if not better_model:
+        # all models failed to obtained meaningful text
+        print(f"{image_path} OCR found no useful text", file=sys.stderr)
+        return None, None
+
+    text = keras_text if better_model == "keras" else tesseract_text
+    langs = langs_keras if better_model == "keras" else langs_tess
+
     return text, langs[0]

@@ -1,7 +1,8 @@
 import sys
 
 import magic
-from lingua import LanguageDetectorBuilder
+from lingua import LanguageDetectorBuilder, ConfidenceValue
+from typing import Optional
 
 mime_mappings = {
     'pdf': 'pdf',
@@ -62,24 +63,29 @@ mime_mappings = {
     'vnd.ms-spreadsheetml': 'xls',
 }
 
-# create a magic object
+# magic object
 pymagic = magic.Magic(mime=True)
+# language detector
 lang_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
-def parse_mime_type(mime_type):
+def parse_mime_type(mime_type) -> str:
     if isinstance(mime_type, list) and len(mime_type) > 0:
         mime_type = mime_type[0]
     if '/' in mime_type:
-        mime_type = mime_type.split('/')[1].split(';')[0].lower()
+        mime_type = mime_type.split('/')[1]
+    if ';' in mime_type:
+        mime_type = mime_type.split(';')[0]
+
+    mime_type = mime_type.lower()
 
     if mime_type in mime_mappings.values():
         return mime_type
     elif mime_type in mime_mappings.keys():
         return mime_mappings[mime_type]
     else:
-        print(f"Unknown file format: {mime_type}", file=sys.stderr)
-        return "unknown"
+        print(f"Unknown mime type: {mime_type}", file=sys.stderr)
+        return ""
 
 
 def get_file_format_magic(file_path):
@@ -87,10 +93,14 @@ def get_file_format_magic(file_path):
     return magic_mime
 
 
-def get_text_languages(plaintext):
-    languages = lang_detector.compute_language_confidence_values(plaintext)
-    if not languages or languages[0].value < 0.3:
-        return ["unknown"]
+def get_text_languages(text) -> list[ConfidenceValue]:
+    languages = lang_detector.compute_language_confidence_values(text)
+    if not languages or languages[0].value < 0.5:
+        # no reliable language detection
+        return []
+
     # select only languages with a confidence > 0.3
-    languages = map(lambda x: x.language, filter(lambda x: x.value > 0.3, languages))
+    # since first language must have a confidence > 0.5 and other must have at least 0.3
+    # this will always return at most two languages
+    languages = map(lambda x: x, filter(lambda x: x.value > 0.3, languages))
     return list(languages)

@@ -14,9 +14,8 @@ from .ocr import extract_using_ocr
 from .tika import get_tika_metadata, get_tika_content
 
 from .filters import filter_plaintext
-from .metadata import get_file_format_magic, parse_mime_type
-
-FILTER = True
+from .metadata import get_file_format_magic, parse_mime_type, get_text_languages
+import keras_ocr
 
 
 class File:
@@ -41,27 +40,32 @@ class File:
     async def process(self, client: AsyncClient):
         metadata = await get_tika_metadata(self.path)
 
-        mime_format = metadata.get("Content-Type", "unknown")
-        if mime_format == "unknown":
+        mime_format = metadata.get("Content-Type", "")
+        if mime_format == "":
             # try to get file format from magic
             mime_format = get_file_format_magic(self.path)
 
         file_format = parse_mime_type(mime_format)
-        if file_format in ["unknown", "zip"]:
+        if not file_format or file_format in ["zip"]:
             return
 
         # image type
-        if file_format in ["png", "jpg", "jpeg"]:
-            plaintext = await extract_using_ocr(self.path)
+        if file_format in ["png", "jpg", "jpeg", "gif", "bmp", "tiff"]:
+            plaintext, language = await extract_using_ocr(self.path)
         else:
             plaintext = await get_tika_content(self.path)
+            langs = get_text_languages(plaintext)
+            language = langs[0].language if langs else None
 
         if not plaintext:
             print(f"File {self.path} has no content", file=sys.stderr)
             return
 
-        if FILTER:
-            plaintext = filter_plaintext(file_format, plaintext)
+        if not language:
+            print(f"File {self.path} couldn't determine language", file=sys.stderr)
+            return
+
+        plaintext = filter_plaintext(file_format, plaintext)
 
         self.format = file_format
         self.plaintext = plaintext

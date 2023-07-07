@@ -63,17 +63,20 @@ async def safe_process(es: AsyncElasticsearch, client: AsyncClient, file_path: s
 
 
 async def run_pipeline(paths: list[str], dataset_name: str):
+    print("Initializing NERvana pipeline...")
     es = get_async_elastic_client()
     try:
         # larger files need more time to be processed
         timeout = httpx.Timeout(200)
         async with httpx.AsyncClient(timeout=timeout) as client:
-            print("Initializing NERvana...")
+            # dummy request so nametag loads the models
             await initialize_nametag(client)
-            print("DONE")
+            print("Testing Elasticsearch connection...")
             await test_connection_async(es)
+            print("Checking index in elasticsearch...")
             await assert_index_exists(es, dataset_name)
-
+            print("DONE")
+            print("Ready to process files...")
             tasks = [asyncio.create_task(safe_process(es, client, file_path, dataset_name)) for file_path in paths]
             await asyncio.gather(*tasks)
 
@@ -116,15 +119,18 @@ if __name__ == "__main__":
     load_dotenv()
     tika.TikaClientOnly = True
     root_dir, dataset_name = get_cl_arguments()
+    print(f"Looking for files in directory: {root_dir}")
     start_time = time.time()
     try:
         files_paths: list[str] = get_files(root_dir)
-    except NotADirectoryError as e:
-        print(e)
+    except NotADirectoryError:
+        print("Path specified is not a directory:", file=sys.stderr)
         exit(1)
     except Exception as e:
         print("Unknown error while getting file paths:", e, file=sys.stderr)
         exit(1)
+
+    print(f"Found {len(files_paths)} files")
 
     asyncio.run(run_pipeline(files_paths, dataset_name))
 
