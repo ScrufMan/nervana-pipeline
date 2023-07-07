@@ -1,6 +1,7 @@
 import sys
 
 import magic
+from lingua import LanguageDetectorBuilder
 
 mime_mappings = {
     'pdf': 'pdf',
@@ -62,28 +63,34 @@ mime_mappings = {
 }
 
 # create a magic object
-mime = magic.Magic(mime=True)
+pymagic = magic.Magic(mime=True)
+lang_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
-def get_file_format(metadata, file_path):
-    # tika
-    content_type = metadata.get("Content-Type", "unknown")
-    # try to use magic when tika fails
-    if content_type == "unknown":
-        content_type = mime.from_file(file_path)
-        if not content_type:
-            return "unknown"
+def parse_mime_type(mime_type):
+    if isinstance(mime_type, list) and len(mime_type) > 0:
+        mime_type = mime_type[0]
+    if '/' in mime_type:
+        mime_type = mime_type.split('/')[1].split(';')[0].lower()
 
-    if isinstance(content_type, list):
-        content_type = content_type[0]
-    if '/' in content_type:
-        content_type = content_type.split('/')[1].split(';')[0].lower()
+    if mime_type in mime_mappings.values():
+        return mime_type
+    elif mime_type in mime_mappings.keys():
+        return mime_mappings[mime_type]
+    else:
+        print(f"Unknown file format: {mime_type}", file=sys.stderr)
+        return "unknown"
 
-    if content_type in mime_mappings.values():
-        return content_type
-    elif content_type in mime_mappings.keys():
-        return mime_mappings[content_type]
 
-    print(f"Unknown file format: {content_type}", file=sys.stderr)
-    return "unknown"
+def get_file_format_magic(file_path):
+    magic_mime = pymagic.from_file(file_path)
+    return magic_mime
 
+
+def get_text_languages(plaintext):
+    languages = lang_detector.compute_language_confidence_values(plaintext)
+    if not languages or languages[0].value < 0.3:
+        return ["unknown"]
+    # select only languages with a confidence > 0.3
+    languages = map(lambda x: x.language, filter(lambda x: x.value > 0.3, languages))
+    return list(languages)

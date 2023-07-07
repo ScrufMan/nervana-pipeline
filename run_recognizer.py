@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import sys
 import time
 from json import JSONDecodeError
@@ -8,6 +7,7 @@ from typing import Tuple
 
 import httpx
 import requests
+from dotenv import load_dotenv
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 from httpx import AsyncClient
@@ -45,7 +45,7 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, file_pat
         print(f"{file_entry.path} finished with {len(file_entry.entities)} entities", flush=True)
 
     except TikaError as e:
-        print(f"File {file_entry.path}, Error from Tika:", e, file=sys.stderr)
+        print(f"File {file_entry.path}, Error from Tika: ", e, file=sys.stderr)
     except ConnectionError:
         print(f"File {file_entry.path}, Cannot connect to Elasticsearch", file=sys.stderr)
     except ElasticsearchException as e:
@@ -113,8 +113,10 @@ async def initialize_nametag(client: AsyncClient):
 
 
 if __name__ == "__main__":
+    load_dotenv()
+    tika.TikaClientOnly = True
     root_dir, dataset_name = get_cl_arguments()
-
+    start_time = time.time()
     try:
         files_paths: list[str] = get_files(root_dir)
     except NotADirectoryError as e:
@@ -124,7 +126,6 @@ if __name__ == "__main__":
         print("Unknown error while getting file paths:", e, file=sys.stderr)
         exit(1)
 
-    start_time = time.time()
     asyncio.run(run_pipeline(files_paths, dataset_name))
 
     duration = time.time() - start_time

@@ -8,16 +8,15 @@ from httpx import AsyncClient
 
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
-from exceptions import *
-from functools import partial
-from lingua import LanguageDetectorBuilder, Language
-from tika import parser
+from lingua import Language
+
+from .ocr import extract_using_ocr
+from .tika import get_tika_metadata, get_tika_content
 
 from .filters import filter_plaintext
-from .metadata import get_file_format
+from .metadata import get_file_format_magic, parse_mime_type
 
 FILTER = True
-lang_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
 class File:
@@ -40,37 +39,29 @@ class File:
         return self.path_obj.name
 
     async def process(self, client: AsyncClient):
-        try:
-            loop = asyncio.get_event_loop()
-            tika_parser = partial(parser.from_file, self.path)
-            tika_response = await loop.run_in_executor(None, tika_parser)
-        except Exception as e:
-            raise TikaError(f"Error while parsing file {self.path}: {e}")
+        metadata = await get_tika_metadata(self.path)
 
-        if tika_response["status"] != 200:
-            raise TikaError(f"{tika_response['status']}: {tika_response['statusMessage']}")
+        mime_format = metadata.get("Content-Type", "unknown")
+        if mime_format == "unknown":
+            # try to get file format from magic
+            mime_format = get_file_format_magic(self.path)
 
-        metadata = tika_response["metadata"]
-        file_format = get_file_format(metadata, self.path)
-
+        file_format = parse_mime_type(mime_format)
         if file_format in ["unknown", "zip"]:
             return
 
-        content = tika_response["content"]
-        if not content:
+        # image type
+        if file_format in ["png", "jpg", "jpeg"]:
+            plaintext = await extract_using_ocr(self.path)
+        else:
+            plaintext = await get_tika_content(self.path)
+
+        if not plaintext:
             print(f"File {self.path} has no content", file=sys.stderr)
             return
-        if not isinstance(content, str):
-            raise TikaError("Tika returned unknown content")
 
-        plaintext: str = content
         if FILTER:
             plaintext = filter_plaintext(file_format, plaintext)
-
-        language = lang_detector.detect_language_of(plaintext)
-        if not language:
-            print(f"File {self.path} unknown language", file=sys.stderr)
-            return
 
         self.format = file_format
         self.plaintext = plaintext
