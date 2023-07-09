@@ -101,6 +101,6 @@ def get_text_languages(text) -> list[ConfidenceValue]:
 
     # select only languages with a confidence > 0.3
     # since first language must have a confidence > 0.5 and other must have at least 0.3
-    # this will always return at most two languages
+    # this will always return at most the two most probable languages
     languages = map(lambda x: x, filter(lambda x: x.value > 0.3, languages))
     return list(languages)

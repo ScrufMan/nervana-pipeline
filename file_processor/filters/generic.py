@@ -1,7 +1,7 @@
 import re
 
 
-def generic_filter(raw: str, oneline=False) -> str:
+def generic_filter(raw: str, oneline) -> str:
     raw.strip()
     # Replace multiple consequent newlines with one
     raw = re.sub(r'\n{2,}', '\n', raw)

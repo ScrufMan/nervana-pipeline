@@ -4,8 +4,8 @@ from .doc import filter_doc
 from .pptx import filter_pptx
 
 
-def filter_plaintext(file_format, plaintext):
-    filtered_text = generic_filter(plaintext)
+def filter_plaintext(file_format, plaintext, from_ocr=False):
+    filtered_text = generic_filter(plaintext, from_ocr)
 
     match file_format:
         case "pdf":

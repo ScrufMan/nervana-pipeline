@@ -10,7 +10,7 @@ from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
 from lingua import Language
 
-from .ocr import extract_using_ocr
+from .ocr import run_ocr
 from .tika import get_tika_metadata, get_tika_content
 
 from .filters import filter_plaintext
@@ -49,9 +49,10 @@ class File:
         if not file_format or file_format in ["zip"]:
             return
 
-        # image type
-        if file_format in ["png", "jpg", "jpeg", "gif", "bmp", "tiff"]:
-            plaintext, language = await extract_using_ocr(self.path)
+        # file is handled by ocr
+        ocr_type = file_format in ["png", "jpg", "jpeg", "tiff"]
+        if ocr_type:
+            plaintext, language = await run_ocr(self.path)
         else:
             plaintext = await get_tika_content(self.path)
             langs = get_text_languages(plaintext)
@@ -65,7 +66,7 @@ class File:
             print(f"File {self.path} couldn't determine language", file=sys.stderr)
             return
 
-        plaintext = filter_plaintext(file_format, plaintext)
+        plaintext = filter_plaintext(file_format, plaintext, ocr_type)
 
         self.format = file_format
         self.plaintext = plaintext
@@ -77,10 +78,6 @@ class File:
             entities = await find_entities_in_file(client, self)
         except Exception as e:
             print(f"Error while recognizing entities in file {self.path}: {e}", file=sys.stderr)
-            return
-
-        if not entities:
-            print(f"File {self.path} has no entities")
             return
 
         self.entities = entities
