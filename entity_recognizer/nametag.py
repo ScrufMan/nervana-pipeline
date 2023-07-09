@@ -1,15 +1,13 @@
 import json
 
 from bs4 import BeautifulSoup
+from httpx import AsyncClient
+from lingua.language import Language
 from ufal.morphodita import *
 
-from httpx import AsyncClient
-
-from .helper import get_context
-
 from .entity import Entity
+from .helpers import get_context
 from .post_processor.lemmatizer import Lemmatizer
-from lingua.language import Language
 
 tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
@@ -29,13 +27,25 @@ NAMETAG_TO_UNIVERSAL = {
     "gu": "location",
     "gq": "location",
     "gc": "location",
+    "g_": "location",
     "at": "phone",
     "me": "email",
     "mi": "link",
     "if": "organization",
     "io": "organization",
     "or": "document",
-    "op": "product"
+    "op": "product",
+    "o_": "artifact",
+}
+
+LANGUGAGE_TO_MODEL = {
+    Language.ENGLISH: "english-conll-200831",
+    Language.CZECH: "czech-cnec2.0-200831",
+    Language.SLOVAK: "czech-cnec2.0-200831",
+    Language.DUTCH: "dutch-conll-200831",
+    Language.GERMAN: "german-conll-200831",
+    Language.SPANISH: "spanish-conll-200831",
+    Language.UKRAINIAN: "ukrainian-languk-230306",
 }
 
 
@@ -43,12 +53,12 @@ async def tokenize_data(client: AsyncClient, data: str, language: Language):
     # get base url from config
     with open("./config/nametag.json", "r") as config_file:
         base_url = json.load(config_file)["URL"]
-        url = f"{base_url}/recognize"
-        model = "english-conll-200831" if language == Language.ENGLISH else "czech-cnec2.0-200831"
-        payload = {'data': data}
-        response = await client.post(url, data=payload, params={"model": model})
-        response.raise_for_status()
-        return response.json()['result']
+    url = f"{base_url}/recognize"
+    model = LANGUGAGE_TO_MODEL[language]
+    payload = {'data': data}
+    response = await client.post(url, data=payload, params={"model": model})
+    response.raise_for_status()
+    return response.json()['result']
 
 
 def get_entities(tokenized):

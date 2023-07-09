@@ -1,4 +1,7 @@
+import textwrap
+
 CONTEXT_LENGTH = 180
+
 
 def get_context(value, parent):
     start_idx = parent.find(value)
@@ -22,3 +25,7 @@ def get_context(value, parent):
         start_idx = max(0, start_idx - offset)
 
     return parent[start_idx:end_idx + 1]
+
+
+def split_string(s, length):
+    return textwrap.wrap(s, length)

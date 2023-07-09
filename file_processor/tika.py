@@ -1,7 +1,7 @@
 from tika import parser
 
 from exceptions import TikaError
-from .common import blocking_to_async
+from .helpers import blocking_to_async
 
 
 async def call_tika(path, service):

@@ -16,7 +16,8 @@ entity_types_choices = [
     ("link", "Internetový odkaz"),
     ("organization", "Organizace"),
     ("document", "Dokument"),
-    ("product", "Produkt")
+    ("product", "Produkt"),
+    ("artifact", "Artefakt")
 ]
 
 language_mappings = {

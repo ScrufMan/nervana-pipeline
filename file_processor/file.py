@@ -1,21 +1,17 @@
-import asyncio
-import sys
-from pathlib import PurePath
 from datetime import datetime
+from pathlib import PurePath
 from typing import Optional
 
+from colorama import Fore, Style
 from httpx import AsyncClient
+from lingua import Language
 
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
-from lingua import Language
-
-from .ocr import run_ocr
-from .tika import get_tika_metadata, get_tika_content
-
 from .filters import filter_plaintext
 from .metadata import get_file_format_magic, parse_mime_type, get_text_languages
-import keras_ocr
+from .ocr import run_ocr
+from .tika import get_tika_metadata, get_tika_content
 
 
 class File:
@@ -41,12 +37,15 @@ class File:
         metadata = await get_tika_metadata(self.path)
 
         mime_format = metadata.get("Content-Type", "")
-        if mime_format == "":
+        if not mime_format:
             # try to get file format from magic
             mime_format = get_file_format_magic(self.path)
 
         file_format = parse_mime_type(mime_format)
-        if not file_format or file_format in ["zip"]:
+        if not file_format:
+            print(f"{Fore.LIGHTMAGENTA_EX}{self}: unknown mime type: {mime_format}{Style.RESET_ALL}")
+            return
+        if file_format in ["zip"]:
             return
 
         # file is handled by ocr
@@ -59,11 +58,11 @@ class File:
             language = langs[0].language if langs else None
 
         if not plaintext:
-            print(f"File {self.path} has no content", file=sys.stderr)
+            print(f"{Fore.LIGHTMAGENTA_EX}{self}: has no content{Style.RESET_ALL}")
             return
 
         if not language:
-            print(f"File {self.path} couldn't determine language", file=sys.stderr)
+            print(f"{Fore.LIGHTMAGENTA_EX}{self}: couldn't determine language{Style.RESET_ALL}")
             return
 
         plaintext = filter_plaintext(file_format, plaintext, ocr_type)
@@ -74,14 +73,17 @@ class File:
         self.timestamp = metadata.get("dcterms:created", datetime.now())
         self.author = metadata.get("dc:creator", "unknown")
 
+        # file should be marked as valid because if something goes wrong during entity recognition
+        # at least the metadata and plaintext will be saved
+        self.valid = True
+        
         try:
             entities = await find_entities_in_file(client, self)
         except Exception as e:
-            print(f"Error while recognizing entities in file {self.path}: {e}", file=sys.stderr)
+            print(f"{Fore.RED}{self}: Error while recognizing entities {e}{Style.RESET_ALL}")
             return
 
         self.entities = entities
-        self.valid = True
 
     def make_document(self):
         return {
@@ -89,14 +91,14 @@ class File:
             "path": self.path,
             "format": self.format,
             "plaintext": self.plaintext,
-            "language": self.language.iso_code_639_1.name.lower() if self.language else "unknown",
+            "language": self.language.iso_code_639_1.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp,
             "entities": [entity.make_document() for entity in self.entities]
         }
 
     def __str__(self):
-        return f"File({self.filename})"
+        return f"File({self.path})"
 
     def __repr__(self):
         return self.__str__()

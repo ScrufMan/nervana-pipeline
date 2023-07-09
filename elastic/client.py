@@ -1,7 +1,7 @@
+import json
 import os
 
 from elasticsearch import AsyncElasticsearch, Elasticsearch
-import json
 
 
 def get_sync_elastic_client() -> Elasticsearch:
@@ -11,7 +11,7 @@ def get_sync_elastic_client() -> Elasticsearch:
     with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
         config = json.load(config_file)
     url = f"http://{config['host']}:{config['port']}"
-    return Elasticsearch(url, timeout=60)
+    return Elasticsearch(url, timeout=200)
 
 
 def get_async_elastic_client() -> AsyncElasticsearch:
@@ -22,7 +22,7 @@ def get_async_elastic_client() -> AsyncElasticsearch:
         config = json.load(config_file)
     url = f"http://{config['host']}:{config['port']}"
 
-    return AsyncElasticsearch(url, timeout=60)
+    return AsyncElasticsearch(url, timeout=200)
 
 
 async def test_connection_async(es: AsyncElasticsearch):

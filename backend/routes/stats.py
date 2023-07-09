@@ -20,6 +20,7 @@ def stats():
         "organization": "Organizace",
         "document": "Dokument",
         "product": "Produkt",
+        "artifact": "Artefakt"
     }
 
     from elasticsearch_dsl import Search

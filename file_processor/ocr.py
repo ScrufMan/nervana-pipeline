@@ -1,12 +1,11 @@
-import sys
 from typing import Optional
 
 import easyocr
+from colorama import Fore, Style
 from lingua import Language, ConfidenceValue
 from pytesseract import pytesseract
 
-from .common import blocking_to_async
-from .filters import generic_filter
+from .helpers import blocking_to_async
 from .image_preprocessor import preprocess
 from .metadata import get_text_languages
 
@@ -138,7 +137,7 @@ async def run_ocr(image_path) -> tuple[Optional[str], Optional[Language]]:
     initial_langs = get_text_languages(initial_text)
     if not initial_langs:
         # no meaningful text
-        print(f"{image_path} OCR found no meaningful text", file=sys.stderr)
+        print(f"{Fore.MAGENTA}{image_path}: OCR found no meaningful text{Style.RESET_ALL}")
         return None, None
 
     langs = initial_langs
@@ -159,7 +158,7 @@ async def run_ocr(image_path) -> tuple[Optional[str], Optional[Language]]:
     better_model = get_most_probable_langs(tesseract_langs, easyocr_langs)
     if not better_model:
         # all models failed to obtained meaningful text
-        print(f"{image_path} OCR found no meaningful text", file=sys.stderr)
+        print(f"{Fore.MAGENTA}{image_path}: OCR found no meaningful text{Style.RESET_ALL}")
         return None, None
 
     text = easyocr_text if better_model == "easyocr" else tesseract_text

@@ -7,6 +7,7 @@ from typing import Tuple
 
 import httpx
 import requests
+from colorama import Fore, Style
 from dotenv import load_dotenv
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import ElasticsearchException
@@ -18,8 +19,8 @@ from elastic import (
     assert_index_exists,
     index_file,
 )
-from file_processor import *
 from exceptions import *
+from file_processor import *
 
 sem = asyncio.Semaphore(6)
 
@@ -31,29 +32,30 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, file_pat
     global total_entities
     file_entry = File(file_path)
     try:
-        print(f"Processing {file_entry.path}", flush=True)
+        print(f"Processing {file_entry}")
         await file_entry.process(client)
 
         if not file_entry.valid:
-            print(f"{file_entry.path} could not be processed")
+            print(f"{Fore.MAGENTA}{file_entry}: could not be processed{Style.RESET_ALL}")
             return
 
         await index_file(es, dataset_name, file_entry)
 
         async with entities_count_lock:
             total_entities += len(file_entry.entities)
-        print(f"{file_entry.path} finished with {len(file_entry.entities)} entities", flush=True)
+        print(
+            f"{Fore.GREEN}{file_entry}: finished with {len(file_entry.entities)} entities{Style.RESET_ALL}")
 
     except TikaError as e:
-        print(f"File {file_entry.path}, Error from Tika: ", e, file=sys.stderr)
+        print(f"{file_entry}: Error from Tika: {e}", file=sys.stderr)
     except ConnectionError:
-        print(f"File {file_entry.path}, Cannot connect to Elasticsearch", file=sys.stderr)
+        print(f"{file_entry}: Cannot connect to Elasticsearch", file=sys.stderr)
     except ElasticsearchException as e:
-        print(f"File {file_entry.path}, Elasticsearch error:", e, file=sys.stderr)
+        print(f"{file_entry}: Elasticsearch error: {e}", file=sys.stderr)
     except (httpx.ReadTimeout, requests.exceptions.ReadTimeout):
-        print(f"File {file_entry.path}, Read timeout", file=sys.stderr)
+        print(f"{file_entry}: Read Timeout", file=sys.stderr)
     except Exception as e:
-        print(f"File {file_entry.path}, Unknown error:", e, file=sys.stderr)
+        print(f"{file_entry}: Unknown error: {e}", file=sys.stderr)
         raise
 
 
@@ -67,7 +69,7 @@ async def run_pipeline(paths: list[str], dataset_name: str):
     es = get_async_elastic_client()
     try:
         # larger files need more time to be processed
-        timeout = httpx.Timeout(200)
+        timeout = httpx.Timeout(300)
         async with httpx.AsyncClient(timeout=timeout) as client:
             # dummy request so nametag loads the models
             await initialize_nametag(client)

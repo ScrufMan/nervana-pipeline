@@ -2,7 +2,7 @@ import sys
 
 import magic
 from lingua import LanguageDetectorBuilder, ConfidenceValue
-from typing import Optional
+from colorama import Fore, Style
 
 mime_mappings = {
     'pdf': 'pdf',
@@ -84,7 +84,6 @@ def parse_mime_type(mime_type) -> str:
     elif mime_type in mime_mappings.keys():
         return mime_mappings[mime_type]
     else:
-        print(f"Unknown mime type: {mime_type}", file=sys.stderr)
         return ""
 
 
