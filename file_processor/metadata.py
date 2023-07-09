@@ -1,8 +1,5 @@
-import sys
-
 import magic
 from lingua import LanguageDetectorBuilder, ConfidenceValue
-from colorama import Fore, Style
 
 mime_mappings = {
     'pdf': 'pdf',
