@@ -5,12 +5,16 @@ class Entity:
         self.lemmatized = lemmatized
         self.context = context
 
-    def make_document(self):
+    def make_document(self, file_id):
         document = {
             "entity_type": self.entity_type,
             "value": self.value,
             "lemmatized": self.lemmatized,
             "context": self.context,
+            "entities": {
+                "name": "entity",
+                "parent": file_id,
+            }
         }
 
         return document

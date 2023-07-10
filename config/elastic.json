@@ -94,44 +94,45 @@
           "type": "date"
         },
         "entities": {
-          "type": "nested",
-          "properties": {
-            "entity_type": {
-              "type": "keyword"
-            },
-            "value": {
+          "type": "join",
+          "relations": {
+            "file": "entity"
+          }
+        },
+        "entity_type": {
+          "type": "keyword"
+        },
+        "value": {
+          "type": "text",
+          "analyzer": "czech_value",
+          "fields": {
+            "english": {
               "type": "text",
-              "analyzer": "czech_value",
-              "fields": {
-                "english": {
-                  "type": "text",
-                  "analyzer": "english_value"
-                },
-                "keyword": {
-                  "type": "keyword"
-                }
-              }
+              "analyzer": "english_value"
             },
-            "lemmatized": {
-              "type": "text",
-              "analyzer": "czech_lemmatized",
-              "fields": {
-                "english": {
-                  "type": "text",
-                  "analyzer": "english_lemmatized"
-                },
-                "keyword": {
-                  "type": "keyword"
-                }
-              }
-            },
-            "context": {
-              "type": "text"
-            },
-            "file_id": {
+            "keyword": {
               "type": "keyword"
             }
           }
+        },
+        "lemmatized": {
+          "type": "text",
+          "analyzer": "czech_lemmatized",
+          "fields": {
+            "english": {
+              "type": "text",
+              "analyzer": "english_lemmatized"
+            },
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "context": {
+          "type": "text"
+        },
+        "file_id": {
+          "type": "keyword"
         }
       }
     }

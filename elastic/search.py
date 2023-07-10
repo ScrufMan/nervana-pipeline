@@ -1,7 +1,11 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
-from .helpers import dataset_to_indices
+from ufal.morphodita import *
+
 from entity_recognizer.post_processor import Lemmatizer
+from .helpers import dataset_to_indices
+
+tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
 
 def create_regexp_query(search_term):
@@ -43,7 +47,7 @@ def create_normal_query(search_term):
             }
         ]
 
-    lemmatized_search_term = lemmatize_text(search_term)
+    lemmatized_search_term = Lemmatizer.lemmatize_text(search_term, tagger)
 
     return [
         {
@@ -106,7 +110,8 @@ def create_normal_query(search_term):
 def add_entities_query_to_search(search, search_terms, entity_types_list, file_format_list, file_language_list):
     # Loop through search_terms, entity_types, file_format_list, and file_language_list and create a search query for each term
     queries = []
-    for search_term, entity_types, file_formats, file_languages in zip(search_terms, entity_types_list, file_format_list, file_language_list):
+    for search_term, entity_types, file_formats, file_languages in zip(search_terms, entity_types_list,
+                                                                       file_format_list, file_language_list):
         if search_term.startswith('r:'):
             clause = create_regexp_query(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):

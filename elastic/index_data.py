@@ -2,6 +2,7 @@ import json
 import os
 
 from elasticsearch import AsyncElasticsearch
+from elasticsearch._async.helpers import async_bulk
 
 from file_processor import File
 
@@ -18,5 +19,17 @@ async def assert_index_exists(es: AsyncElasticsearch, index_name: str):
 
 
 async def index_file(es: AsyncElasticsearch, dataset: str, file: File):
-    document = file.make_document()
-    await es.index(index=dataset, document=document)
+    file_document = file.make_document()
+    res = await es.index(index=dataset, document=file_document)
+    file_id = res['_id']
+
+    actions = [
+        {
+            "_index": dataset,
+            "_source": entity.make_document(file_id=file_id),
+            "routing": file_id  # entity is child of file therefore it needs to be routed to the same shard
+        }
+        for entity in file.entities
+    ]
+
+    await async_bulk(es, actions)

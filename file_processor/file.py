@@ -76,7 +76,7 @@ class File:
         # file should be marked as valid because if something goes wrong during entity recognition
         # at least the metadata and plaintext will be saved
         self.valid = True
-        
+
         try:
             entities = await find_entities_in_file(client, self)
         except Exception as e:
@@ -94,7 +94,9 @@ class File:
             "language": self.language.iso_code_639_1.name.lower(),
             "author": self.author,
             "timestamp": self.timestamp,
-            "entities": [entity.make_document() for entity in self.entities]
+            "entities": {
+                "name": "file",
+            }
         }
 
     def __str__(self):
