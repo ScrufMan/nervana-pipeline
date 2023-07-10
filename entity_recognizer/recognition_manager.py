@@ -31,9 +31,10 @@ async def find_entities_in_file(client: AsyncClient, file: "File") -> list[Entit
     plaintext = file.plaintext
     entities = []
 
+    # split large texts into smaller batches
     if len(plaintext) > 500000:
         batches = split_string(plaintext, 500000)
-
+        n_batches = len(batches)
         tasks = [do_ner(client, batch, file.language) for batch in batches]
 
         finished_tasks = 0
@@ -41,8 +42,7 @@ async def find_entities_in_file(client: AsyncClient, file: "File") -> list[Entit
             batch_entities = await completed_task
             entities.extend(batch_entities)
             finished_tasks += 1
-            print(f"{file}: Finished batch {finished_tasks}/{len(batches)}")
-
+            print(f"{file}: Finished batch {finished_tasks}/{n_batches}")
     else:
         entities = await do_ner(client, plaintext, file.language)
 

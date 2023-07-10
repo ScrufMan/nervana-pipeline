@@ -10,7 +10,7 @@ async def call_tika(path, service):
     }
     try:
         response = await blocking_to_async(parser.from_file, path, service=service,
-                                           requestOptions={'headers': headers, 'timeout': 300})
+                                           requestOptions={'timeout': 300})
         if response["status"] != 200:
             raise TikaError(f"Tika returned {response['status']}")
         return response
