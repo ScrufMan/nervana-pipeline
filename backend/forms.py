@@ -57,6 +57,11 @@ language_mappings = {
     "uk": "Ukrajinský",
     "ur": "Urdština",
     "vi": "Vietnamský",
+    "la": "Latinský",
+    "eo": "Esperanto",
+    "yo": "Jorubština",
+    "tn": "Setswanština",
+    "cy": "Velština",
 }
 
 

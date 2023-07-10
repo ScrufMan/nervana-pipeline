@@ -11,25 +11,18 @@ def tag_term_in_context(context, search_term):
     return context.replace(search_term, f'<span class="text-danger font-weight-bold">{search_term}</span>')
 
 
-def entities_from_hits(entity_hits, file_hits):
+def entities_from_hits(entity_hits):
     entities = []
 
-    files = []
-    for file_hit in file_hits:
-        files.append((file_hit.meta.id, file_hit.filename, file_hit.path))
-
     for entity_hit in entity_hits:
-        for file_id, filename, file_path in files:
-            if entity_hit.file_id == file_id:
-                break
-        else:
-            filename = "Soubor nenalezen v Elasticsearch"
-            file_path = ""
-
         context = tag_term_in_context(entity_hit.context, entity_hit.value)
+        dataset = entity_hit.meta.index
 
-        dataset = entity_hit.meta.index.split("-entities")[0]
-        entity = FoundEntity(filename, context, dataset, file_path, entity_hit.file_id)
+        filename = entity_hit.meta.inner_hits["file"].hits[0].filename
+        file_path = entity_hit.meta.inner_hits["file"].hits[0].path
+        file_id = entity_hit.entities.parent
+
+        entity = FoundEntity(filename, context, dataset, file_path, file_id)
         entities.append(entity)
 
     return entities

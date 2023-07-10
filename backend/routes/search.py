@@ -5,7 +5,6 @@ from backend import app, es
 from backend.forms import SearchForm
 from backend.models import entities_from_hits
 from elastic import find_entities_with_limit
-from functools import reduce
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -26,11 +25,12 @@ def search():
     file_format_list = form.file_format_list.data
     file_language_list = form.file_language_list.data
 
-    hits = find_entities_with_limit(es, dataset, search_terms, entity_types_list, file_format_list, file_language_list,
-                                    page, results_per_page)
-    total_hits = reduce(lambda total, hit: total + len(hit.entities), hits, 0)
+    response = find_entities_with_limit(es, dataset, search_terms, entity_types_list, file_format_list,
+                                        file_language_list,
+                                        page, results_per_page)
+    total_hits = response.hits.total.value
 
-    results = entities_from_hits(hits, file_hits)
+    results = entities_from_hits(response)
 
     pagination = Pagination(
         page=page,

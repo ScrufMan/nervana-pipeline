@@ -107,41 +107,38 @@ def create_normal_query(search_term):
     ]
 
 
-def add_entities_query_to_search(search, search_terms, entity_types_list, file_format_list, file_language_list):
+def build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list):
     # Loop through search_terms, entity_types, file_format_list, and file_language_list and create a search query for each term
     queries = []
     for search_term, entity_types, file_formats, file_languages in zip(search_terms, entity_types_list,
                                                                        file_format_list, file_language_list):
         if search_term.startswith('r:'):
-            clause = create_regexp_query(search_term)
+            entity_clause = create_regexp_query(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):
-            clause = create_exact_match_query(search_term)
+            entity_clause = create_exact_match_query(search_term)
         else:
-            clause = create_normal_query(search_term)
+            entity_clause = create_normal_query(search_term)
 
         query = Q(
             "bool",
             must=[
                 Q(
-                    "nested",
-                    path="entities",
-                    query=Q(
-                        "bool",
-                        should=clause,
-                        filter=[
-                            {
-                                "terms": {
-                                    "entities.entity_type": entity_types
-                                }
+                    "bool",
+                    should=entity_clause,
+                    filter=[
+                        {
+                            "terms": {
+                                "entity_type": entity_types
                             }
-                        ],
-                        minimum_should_match=1
-                    )
+                        }
+                    ],
+                    minimum_should_match=1
                 ),
             ],
             filter=[
-                Q("terms", format=file_formats),
-                Q("terms", language=file_languages)
+                Q("has_parent", parent_type="file", query=Q("bool", filter=[Q("terms", format=file_formats),
+                                                                            Q("terms", language=file_languages)]),
+                  inner_hits={"_source": ["filename", "path"]})
             ]
         )
 
@@ -165,8 +162,8 @@ def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_ty
     search_from = (page - 1) * page_size
     search = search[search_from:search_from + page_size]
 
-    search = add_entities_query_to_search(search, search_terms, entity_types_list, file_format_list, file_language_list)
-
+    search = build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list)
+    search = search.params(track_total_hits=True)
     response = search.execute()
 
     return response
@@ -177,7 +174,7 @@ def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_lis
 
     search = Search(using=es, index=indices)
 
-    search = add_entities_query_to_search(search, search_terms, entity_types_list)
+    search = build_search_query(search, search_terms, entity_types_list)
 
     response = search.scan()
 
@@ -206,7 +203,7 @@ def get_filepaths_by_ids(es: Elasticsearch, files):
 
 
 def get_file(es, dataset, file_id):
-    index = f"{dataset}-files"
+    index = dataset
     try:
         res = es.get(index=index, id=file_id)["_source"]
         return res
