@@ -2,7 +2,7 @@ import json
 import os
 
 from elasticsearch import AsyncElasticsearch
-from elasticsearch._async.helpers import async_bulk
+from elasticsearch.helpers import async_bulk
 
 from file_processor import File
 
