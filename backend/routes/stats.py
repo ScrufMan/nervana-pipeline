@@ -2,7 +2,6 @@ from flask import render_template
 
 from backend import app, es
 from backend.forms import EntityTypeForm
-from elastic import get_all_files
 
 
 @app.route("/")
@@ -27,21 +26,38 @@ def stats():
 
     form = EntityTypeForm()
 
-    files_search = Search(using=es, index="testovaci_dataset-files")
-    entities_search = Search(using=es, index="testovaci_dataset-entities")
+    search = Search(using=es, index="testovaci_dataset")
 
     # Aggregations for graph data
-    files_search.aggs.bucket("file_formats", "terms", field="format")
-    entities_search.aggs.bucket("entity_types", "terms", field="entity_type")
-    entities_search.aggs.bucket("file_entities", "terms", field="file_id", order={"_count": "desc"})
-    entities_search.aggs.bucket("most_common_values", "terms", field="lemmatized.keyword")
+    search.aggs.bucket("file_formats", "terms", field="format")
+    search.aggs.bucket("entity_types", "terms", field="entity_type")
+    search.aggs.bucket("most_common_values", "terms", field="lemmatized.keyword")
 
-    files_response = files_search.execute()
-    entities_response = entities_search.execute()
+    # Define the aggregation
+    search.aggs.bucket(
+        'files_with_most_entities',  # The name of the aggregation
+        'children',  # The type of the aggregation
+        type='entity',  # The child document type
+        aggs={
+            'top_files': {
+                'terms': {
+                    'field': 'entities.parent.keyword',  # The parent document field
+                    'size': 10,  # The number of top files to return
+                    'order': {'_count': 'desc'},  # Order by count descending
+                }
+            }
+        }
+    )
 
-    file_formats = files_response.aggregations.file_formats.buckets
-    entity_types = entities_response.aggregations.entity_types.buckets
-    most_common_values = entities_response.aggregations.most_common_values.buckets
+    response = search.execute()
+
+    # Print the results
+    for bucket in response.aggregations.files_with_most_entities.top_files.buckets:
+        print(f"File ID: {bucket.key}, Entity Count: {bucket.doc_count}")
+
+    file_formats = response.aggregations.file_formats.buckets
+    entity_types = response.aggregations.entity_types.buckets
+    most_common_values = response.aggregations.most_common_values.buckets
 
     # Convert AttrList objects to dictionaries
     file_formats = [bucket.to_dict() for bucket in file_formats]
@@ -49,11 +65,6 @@ def stats():
     entity_types = [bucket.to_dict() for bucket in entity_types]
     entity_types = list(map(lambda bucket: {**bucket, "key": entity_type_to_czech[bucket["key"]]}, entity_types))
 
-    files = list(get_all_files(es, "testovaci_dataset"))
-    filenames = {file.meta.id: file["filename"] for file in files}
-    file_entities = [{**bucket.to_dict(), 'filename': filenames[bucket['key']]} for bucket in
-                     entities_response.aggregations.file_entities.buckets]
-
     return render_template("stats.html", file_formats=file_formats, entity_types=entity_types,
                            most_common_values=most_common_values,
-                           file_entities=file_entities, form=form)
+                           file_entities=[], form=form)

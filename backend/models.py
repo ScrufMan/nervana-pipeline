@@ -17,7 +17,7 @@ def entities_from_hits(entity_hits):
     for entity_hit in entity_hits:
         context = tag_term_in_context(entity_hit.context, entity_hit.value)
         dataset = entity_hit.meta.index
-
+  
         filename = entity_hit.meta.inner_hits["file"].hits[0].filename
         file_path = entity_hit.meta.inner_hits["file"].hits[0].path
         file_id = entity_hit.entities.parent

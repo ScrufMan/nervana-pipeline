@@ -1,11 +1,12 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
 from elasticsearch_dsl.aggs import Terms, A
+
 from .helpers import dataset_to_indices
 
 
 def get_top_files_field_values(es: Elasticsearch, datset, field):
-    indices = dataset_to_indices(es, datset, file_indices=True)
+    indices = dataset_to_indices(es, datset)
 
     # create a Search object for the "files" index
     s = Search(using=es, index=indices[0])

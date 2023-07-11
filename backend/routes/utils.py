@@ -22,8 +22,10 @@ def export_csv(dataset, hits):
         writer.writeheader()
 
         for hit in hits:
+            dataset = hit.meta.index
             hit = hit.to_dict()
-            hit["dataset"] = dataset if dataset != "all" else "Všechny"
+            hit["dataset"] = dataset
+            hit["file_id"] = hit["entities"]["parent"]
             writer.writerow({field: value for field, value in hit.items() if field in fieldnames})
 
     response = send_file(csvfile.name, mimetype='text/csv', as_attachment=True)
@@ -43,9 +45,8 @@ def export_zip(paths):
 def get_files_containing_entities(hits):
     ids = set()
     for hit in hits:
-        dataset = hit.meta.index.split("-entities")[0]
-        file_index = f"{dataset}-files"
-        ids.add((file_index, hit["file_id"]))
+        dataset = hit.meta.index
+        ids.add((dataset, hit.entities.parent))
     return list(ids)
 
 
@@ -63,8 +64,10 @@ def export():
     dataset = form.dataset.data
     search_terms = form.search_terms.data
     entity_types_list = form.entity_types_list.data
+    file_format_list = form.file_format_list.data
+    file_language_list = form.file_language_list.data
 
-    hits = find_all_entities(es, dataset, search_terms, entity_types_list)
+    hits = find_all_entities(es, dataset, search_terms, entity_types_list, file_format_list, file_language_list)
 
     match export_format:
         case "csv":
@@ -104,7 +107,7 @@ def update_graph():
 
     most_common_entity_type = request.args.get("entity_type", "all")
 
-    entities_search = Search(using=es, index="testovaci_dataset-entities")
+    entities_search = Search(using=es, index="testovaci_dataset")
 
     if most_common_entity_type != "all":
         entities_search = entities_search.filter('term', entity_type=most_common_entity_type)

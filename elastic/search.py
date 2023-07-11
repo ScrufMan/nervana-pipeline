@@ -169,12 +169,13 @@ def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_ty
     return response
 
 
-def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
-    indices = dataset_to_indices(es, dataset, file_indices=False)
+def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list, file_format_list,
+                      file_language_list):
+    indices = dataset_to_indices(es, dataset)
 
     search = Search(using=es, index=indices)
 
-    search = build_search_query(search, search_terms, entity_types_list)
+    search = build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list)
 
     response = search.scan()
 
@@ -182,10 +183,10 @@ def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_lis
 
 
 def get_all_files(es: Elasticsearch, dataset):
-    indices = dataset_to_indices(es, dataset, file_indices=True)
+    indices = dataset_to_indices(es, dataset)
 
     s = Search(using=es, index=indices)
-    response = s.query(Q("match_all")).scan()
+    response = s.query(Q("match")).scan()
 
     return response
 
@@ -203,9 +204,8 @@ def get_filepaths_by_ids(es: Elasticsearch, files):
 
 
 def get_file(es, dataset, file_id):
-    index = dataset
     try:
-        res = es.get(index=index, id=file_id)["_source"]
+        res = es.get(index=dataset, id=file_id)["_source"]
         return res
     except Exception as e:
         print(f"Error retrieving file from elastic: {e}")
