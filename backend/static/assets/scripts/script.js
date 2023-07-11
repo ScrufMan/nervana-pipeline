@@ -1,4 +1,7 @@
 $(document).ready(function () {
+    // initialize tooltips
+    $('body').tooltip({selector: '[data-toggle=tooltip]'});
+    
     // don't close dropdown menu when clicking indise it
     $(document).on('click', '.dropdown-menu', function (event) {
         event.stopPropagation();

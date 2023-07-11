@@ -5,10 +5,15 @@
     <ul class="list-group">
         <li class="list-group-item active">
             <div class="row align-items-center">
-                <div class="col-md-10"><span>Nalezeno entit: <b>{{ total_hits }}</b></span>
+                <div class="col-md-10"><span>Nalezeno entit: <b {% if total_hits > 10000 %} class="text-warning"
+                                                                                            data-toggle="tooltip"
+                                                                                            data-placement="top"
+                                                                                            title="Kvůli výkonu je počet výsledků které se dají procházet limitován na 10&nbsp;000 pro zíkání všech použijte export" {% endif %} >{{ total_hits }}</b></span>
                 </div>
                 <div class="col-md-2">
-                    <button id="entity-export" class="btn btn-sm btn-light w-100" type="button">
+                    <button id="entity-export"
+                            class="btn btn-sm {% if total_hits > 10000 %} btn-warning {% else %} btn-light {% endif %} w-100"
+                            type="button">
                         Export
                     </button>
                 </div>

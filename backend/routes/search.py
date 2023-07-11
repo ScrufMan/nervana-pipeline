@@ -34,7 +34,7 @@ def search():
 
     pagination = Pagination(
         page=page,
-        total=total_hits,
+        total=total_hits if total_hits <= 10000 else 10000,
         per_page=results_per_page,
         css_framework='bootstrap4',
     )
