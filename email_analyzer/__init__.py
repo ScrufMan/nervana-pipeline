@@ -1,1 +1,0 @@
-from email_analyzer.analyzer import run_analysis
