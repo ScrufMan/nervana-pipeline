@@ -1,5 +1,0 @@
-FROM apache/tika:latest
-
-EXPOSE 9998
-
-CMD ["java", "-jar", "/tika-server.jar", "-h", "0.0.0.0"]

@@ -29,6 +29,6 @@ services:
 #  tika:
 #    build:
 #      context: ./
-#      dockerfile: Dockerfile-tika
+#      dockerfile: Dockerfile
 #    ports:
 #      - "9998:9998"

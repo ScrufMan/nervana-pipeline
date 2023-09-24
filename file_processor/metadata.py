@@ -1,4 +1,5 @@
 import magic
+from lingua import LanguageDetectorBuilder, ConfidenceValue
 
 mime_mappings = {
     'pdf': 'pdf',
@@ -28,11 +29,11 @@ mime_mappings = {
     'vnd.oasis.opendocument.spreadsheet': 'ods',
     'vnd.oasis.opendocument.presentation': 'odp',
     'zip': 'zip',
-    'x-rar-compressed': 'rar',
-    'x-7z-compressed': '7z',
-    'x-tar': 'tar',
-    'x-gzip': 'gz',
-    'x-bzip2': 'bz2',
+    'x-rar-compressed': 'zip',
+    'x-7z-compressed': 'zip',
+    'x-tar': 'zip',
+    'x-gzip': 'zip',
+    'x-bzip2': 'zip',
     'x-xz': 'xz',
     'x-msdownload': 'exe',
     'x-shockwave-flash': 'swf',
@@ -56,24 +57,46 @@ mime_mappings = {
     'x-midi': 'mid',
     'x-aiff': 'aif',
     'x-mpegurl': 'm3u',
+    'vnd.ms-spreadsheetml': 'xls',
 }
 
-# create a magic object
-mime = magic.Magic(mime=True)
+# magic object
+pymagic = magic.Magic(mime=True)
+# language detector
+lang_detector = LanguageDetectorBuilder.from_all_languages().build()
 
 
-# define a function to get the file format
-def get_file_format(content_type, file_path):
-    # try to use magic when tika fails
-    if content_type == "unknown":
-        content_type = mime.from_file(file_path)
-        if not content_type:
-            return "unknown"
+def parse_mime_type(mime_type) -> str:
+    if isinstance(mime_type, list) and len(mime_type) > 0:
+        mime_type = mime_type[0]
+    if '/' in mime_type:
+        mime_type = mime_type.split('/')[1]
+    if ';' in mime_type:
+        mime_type = mime_type.split(';')[0]
 
-    if '/' in content_type:
-        content_type = content_type.split('/')[1].split(';')[0].lower()
+    mime_type = mime_type.lower()
+
+    if mime_type in mime_mappings.values():
+        return mime_type
+    elif mime_type in mime_mappings.keys():
+        return mime_mappings[mime_type]
     else:
-        return content_type
+        return ""
 
-    file_format = mime_mappings.get(content_type, "unknown")
-    return file_format
+
+def get_file_format_magic(file_path):
+    magic_mime = pymagic.from_file(file_path)
+    return magic_mime
+
+
+def get_text_languages(text) -> list[ConfidenceValue]:
+    languages = lang_detector.compute_language_confidence_values(text)
+    if not languages or languages[0].value < 0.5:
+        # no reliable language detection
+        return []
+
+    # select only languages with a confidence > 0.3
+    # since first language must have a confidence > 0.5 and other must have at least 0.3
+    # this will always return at most the two most probable languages
+    languages = map(lambda x: x, filter(lambda x: x.value > 0.3, languages))
+    return list(languages)

@@ -1,7 +1,11 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
+from ufal.morphodita import *
+
+from entity_recognizer.post_processor import Lemmatizer
 from .helpers import dataset_to_indices
-from entity_recognizer.post_processor import lemmatize_text
+
+tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
 
 def create_regexp_query(search_term):
@@ -43,7 +47,7 @@ def create_normal_query(search_term):
             }
         ]
 
-    lemmatized_search_term = lemmatize_text(search_term)
+    lemmatized_search_term = Lemmatizer.lemmatize_text(search_term, tagger)
 
     return [
         {
@@ -103,28 +107,39 @@ def create_normal_query(search_term):
     ]
 
 
-def add_entities_query_to_search(search, search_terms, entity_types_list):
-    # Loop through search_terms and entity_types and create a search query for each term
+def build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list):
+    # Loop through search_terms, entity_types, file_format_list, and file_language_list and create a search query for each term
     queries = []
-    for search_term, entity_types in zip(search_terms, entity_types_list):
+    for search_term, entity_types, file_formats, file_languages in zip(search_terms, entity_types_list,
+                                                                       file_format_list, file_language_list):
         if search_term.startswith('r:'):
-            clause = create_regexp_query(search_term)
+            entity_clause = create_regexp_query(search_term)
         elif search_term.startswith('"') and search_term.endswith('"'):
-            clause = create_exact_match_query(search_term)
+            entity_clause = create_exact_match_query(search_term)
         else:
-            clause = create_normal_query(search_term)
+            entity_clause = create_normal_query(search_term)
 
         query = Q(
             "bool",
-            should=clause,
-            filter=[
-                {
-                    "terms": {
-                        "entity_type": entity_types
-                    }
-                }
+            must=[
+                Q(
+                    "bool",
+                    should=entity_clause,
+                    filter=[
+                        {
+                            "terms": {
+                                "entity_type": entity_types
+                            }
+                        }
+                    ],
+                    minimum_should_match=1
+                ),
             ],
-            minimum_should_match=1
+            filter=[
+                Q("has_parent", parent_type="file", query=Q("bool", filter=[Q("terms", format=file_formats),
+                                                                            Q("terms", language=file_languages)]),
+                  inner_hits={"_source": ["filename", "path"]})
+            ]
         )
 
         queries.append(query)
@@ -138,27 +153,29 @@ def add_entities_query_to_search(search, search_terms, entity_types_list):
     return search
 
 
-def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, page, page_size):
-    indices = dataset_to_indices(es, dataset, file_indices=False)
+def find_entities_with_limit(es: Elasticsearch, dataset, search_terms, entity_types_list, file_format_list,
+                             file_language_list, page, page_size):
+    indices = dataset_to_indices(es, dataset)
 
     search = Search(using=es, index=indices)
 
     search_from = (page - 1) * page_size
     search = search[search_from:search_from + page_size]
 
-    search = add_entities_query_to_search(search, search_terms, entity_types_list)
-
+    search = build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list)
+    search = search.params(track_total_hits=True)
     response = search.execute()
 
     return response
 
 
-def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list):
-    indices = dataset_to_indices(es, dataset, file_indices=False)
+def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_list, file_format_list,
+                      file_language_list):
+    indices = dataset_to_indices(es, dataset)
 
     search = Search(using=es, index=indices)
 
-    search = add_entities_query_to_search(search, search_terms, entity_types_list)
+    search = build_search_query(search, search_terms, entity_types_list, file_format_list, file_language_list)
 
     response = search.scan()
 
@@ -166,10 +183,10 @@ def find_all_entities(es: Elasticsearch, dataset, search_terms, entity_types_lis
 
 
 def get_all_files(es: Elasticsearch, dataset):
-    indices = dataset_to_indices(es, dataset, file_indices=True)
+    indices = dataset_to_indices(es, dataset)
 
     s = Search(using=es, index=indices)
-    response = s.query(Q("match_all")).scan()
+    response = s.query(Q("match")).scan()
 
     return response
 
@@ -187,9 +204,8 @@ def get_filepaths_by_ids(es: Elasticsearch, files):
 
 
 def get_file(es, dataset, file_id):
-    index = f"{dataset}-files"
     try:
-        res = es.get(index=index, id=file_id)["_source"]
+        res = es.get(index=dataset, id=file_id)["_source"]
         return res
     except Exception as e:
         print(f"Error retrieving file from elastic: {e}")

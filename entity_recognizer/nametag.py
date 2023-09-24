@@ -1,14 +1,15 @@
 import json
 
 from bs4 import BeautifulSoup
-import requests
-import re
-from entity_recognizer.helper import get_context
-from entity_recognizer.post_processor import lemmatize_text
+from httpx import AsyncClient
+from lingua.language import Language
+from ufal.morphodita import *
 
 from .entity import Entity
+from .helpers import get_context
+from .post_processor.lemmatizer import Lemmatizer
 
-BASE_URL = "https://lindat.mff.cuni.cz/services/nametag/api"
+tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
 
 NAMETAG_TO_UNIVERSAL = {
     "P": "person",
@@ -26,27 +27,41 @@ NAMETAG_TO_UNIVERSAL = {
     "gu": "location",
     "gq": "location",
     "gc": "location",
+    "g_": "location",
     "at": "phone",
     "me": "email",
     "mi": "link",
     "if": "organization",
     "io": "organization",
     "or": "document",
-    "op": "product"
+    "op": "product",
+    "o_": "artifact",
+}
+
+LANGUGAGE_TO_MODEL = {
+    Language.ENGLISH: "english-conll-200831",
+    Language.CZECH: "czech-cnec2.0-200831",
+    Language.SLOVAK: "czech-cnec2.0-200831",
+    Language.DUTCH: "dutch-conll-200831",
+    Language.GERMAN: "german-conll-200831",
+    Language.SPANISH: "spanish-conll-200831",
+    Language.UKRAINIAN: "ukrainian-languk-230306",
 }
 
 
-def tokenize_data(data):
-    url = f"{BASE_URL}/recognize"
+async def tokenize_data(client: AsyncClient, data: str, language: Language):
+    # get base url from config
+    with open("./config/nametag.json", "r") as config_file:
+        base_url = json.load(config_file)["URL"]
+    url = f"{base_url}/recognize"
+    model = LANGUGAGE_TO_MODEL[language]
     payload = {'data': data}
-    response = requests.post(url, data=payload)
-    if response.status_code == 200:
-        return response.json()['result']
-    else:
-        raise Exception(f"Nametag failed with status code {response.status_code}, message: {response.text}")
+    response = await client.post(url, data=payload, params={"model": model})
+    response.raise_for_status()
+    return response.json()['result']
 
 
-def get_entities(tokenized, file_id):
+def get_entities(tokenized):
     entities = []
 
     soup = BeautifulSoup(tokenized, "html.parser")
@@ -66,21 +81,21 @@ def get_entities(tokenized, file_id):
         entity_value = tokenized_entity.text
 
         try:
-            lemmatized_value = lemmatize_text(entity_value)
+            lemmatized_value = Lemmatizer.lemmatize_text(entity_value, tagger)
         except Exception as e:
             print(f"Failed to lemmatize {entity_value}, error: {e}")
             lemmatized_value = entity_value
 
         context = get_context(entity_value, tokenized_entity.parent.text)
 
-        entity = Entity(universal_type, entity_value, lemmatized_value, context, file_id)
+        entity = Entity(universal_type, entity_value, lemmatized_value, context)
         entities.append(entity)
 
     return entities
 
 
-def run_nametag(plaintext, file_id):
-    tokenized = tokenize_data(plaintext)
-    found_entities = get_entities(tokenized, file_id)
+async def run_nametag(client: AsyncClient, plaintext: str, language: Language):
+    tokenized = await tokenize_data(client, plaintext, language)
+    found_entities = get_entities(tokenized)
 
     return found_entities
