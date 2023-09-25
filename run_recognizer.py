@@ -57,9 +57,16 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, file_pat
         raise
 
 
-async def safe_process(es: AsyncElasticsearch, client: AsyncClient, file_path: str, dataset_name: str):
-    async with sem:
-        await process_one_file(es, client, file_path, dataset_name)
+async def worker(task_queue, es: AsyncElasticsearch, client: AsyncClient, dataset_name: str):
+    while True:
+        file_path = await task_queue.get()
+        if file_path is None:  # Sentinel value to indicate the worker should stop
+            break
+        try:
+            await process_one_file(es, client, file_path, dataset_name)
+        except Exception as e:
+            print(f"An error occurred while processing {file_path}: {e}", file=sys.stderr)
+        task_queue.task_done()
 
 
 async def run_pipeline(paths: list[str], dataset_name: str):
@@ -77,8 +84,24 @@ async def run_pipeline(paths: list[str], dataset_name: str):
             await assert_index_exists(es, dataset_name)
             print("DONE")
             print("Ready to process files...")
-            tasks = [asyncio.create_task(safe_process(es, client, file_path, dataset_name)) for file_path in paths]
-            await asyncio.gather(*tasks)
+
+            task_queue = asyncio.Queue()
+            num_workers = 4  # Number of worker coroutines
+
+            # Create worker tasks
+            workers = [asyncio.create_task(worker(task_queue, es, client, dataset_name)) for _ in range(num_workers)]
+
+            # Add file paths to the task queue
+            for file_path in paths:
+                await task_queue.put(file_path)
+
+            # Wait for all tasks in the queue to be processed
+            await task_queue.join()
+
+            # Stop the worker tasks
+            for _ in range(num_workers):
+                await task_queue.put(None)
+            await asyncio.gather(*workers)
 
     except ConnectionError:
         print("Cannot connect to Elasticsearch", file=sys.stderr)

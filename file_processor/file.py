@@ -58,6 +58,11 @@ class File:
             print(f"{Fore.LIGHTMAGENTA_EX}{self}: couldn't determine language{Style.RESET_ALL}")
             return
 
+        if language not in [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
+                            Language.GERMAN, Language.SPANISH, Language.UKRAINIAN]:
+            print(f"{Fore.LIGHTMAGENTA_EX}{self}: unsupported language: {language}{Style.RESET_ALL}")
+            return
+
         # TODO: get if was parsed by tika OCR
         plaintext = filter_plaintext(file_format, plaintext, False)
 
