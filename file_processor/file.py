@@ -10,8 +10,7 @@ from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
 from .filters import filter_plaintext
 from .metadata import get_file_format_magic, parse_mime_type, get_text_languages
-from .ocr import run_ocr
-from .tika import get_tika_metadata, get_tika_content
+from .tika import call_tika
 
 
 class File:
@@ -34,9 +33,9 @@ class File:
         return self.path_obj.name
 
     async def process(self, client: AsyncClient):
-        metadata = await get_tika_metadata(self.path)
+        metadata, plaintext = await call_tika(self.path)
 
-        mime_format = metadata.get("Content-Type", "")
+        mime_format = metadata.get("Content-Type")
         if not mime_format:
             # try to get file format from magic
             mime_format = get_file_format_magic(self.path)
@@ -48,24 +47,19 @@ class File:
         if file_format in ["zip"]:
             return
 
-        # file is handled by ocr
-        ocr_type = file_format in ["png", "jpg", "jpeg", "tiff"]
-        if ocr_type:
-            plaintext, language = await run_ocr(self.path)
-        else:
-            plaintext = await get_tika_content(self.path)
-            langs = get_text_languages(plaintext)
-            language = langs[0].language if langs else None
-
         if not plaintext:
             print(f"{Fore.LIGHTMAGENTA_EX}{self}: has no content{Style.RESET_ALL}")
             return
+
+        langs = get_text_languages(plaintext)
+        language = langs[0].language if langs else None
 
         if not language:
             print(f"{Fore.LIGHTMAGENTA_EX}{self}: couldn't determine language{Style.RESET_ALL}")
             return
 
-        plaintext = filter_plaintext(file_format, plaintext, ocr_type)
+        # TODO: get if was parsed by tika OCR
+        plaintext = filter_plaintext(file_format, plaintext, False)
 
         self.format = file_format
         self.plaintext = plaintext
@@ -73,7 +67,7 @@ class File:
         self.timestamp = metadata.get("dcterms:created", datetime.now())
         self.author = metadata.get("dc:creator", "unknown")
 
-        # file should be marked as valid because if something goes wrong during entity recognition
+        # file is marked as valid because if something goes wrong during entity recognition
         # at least the metadata and plaintext will be saved
         self.valid = True
 

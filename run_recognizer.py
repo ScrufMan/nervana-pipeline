@@ -22,7 +22,7 @@ from elastic import (
 from exceptions import *
 from file_processor import *
 
-sem = asyncio.Semaphore(1)
+sem = asyncio.Semaphore(8)
 
 entities_count_lock = asyncio.Lock()
 total_entities = 0

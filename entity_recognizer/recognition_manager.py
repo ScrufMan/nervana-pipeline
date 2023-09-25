@@ -17,7 +17,8 @@ if TYPE_CHECKING:
 
 async def do_ner(client: AsyncClient, plaintext: str, language: Language) -> list[Entity]:
     match language:
-        case Language.CZECH | Language.SLOVAK | Language.ENGLISH | Language.DUTCH | Language.GERMAN | Language.SPANISH | Language.UKRAINIAN:
+        case Language.CZECH | Language.SLOVAK | Language.ENGLISH | Language.DUTCH | \
+             Language.GERMAN | Language.SPANISH | Language.UKRAINIAN:
             batch_entities = await run_nametag(client, plaintext, language)
         case _:
             batch_entities = get_entities(plaintext)

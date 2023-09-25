@@ -22,7 +22,7 @@ SPACY_TO_UNIVERSAL = {
 
 def get_entities(data):
     entities = []
-    nlp = spacy.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_trf")
     doc = nlp(data)
     for ent in doc.ents:
         value = ent.text
