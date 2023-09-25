@@ -10,7 +10,7 @@ from .helpers import split_string
 from .nametag import run_nametag
 from .spacy import get_entities
 
-# Prevent cyclic import
+# prevent cyclic import
 if TYPE_CHECKING:
     from file_processor import File
 

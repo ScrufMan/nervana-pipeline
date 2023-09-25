@@ -5,14 +5,11 @@ from .helpers import blocking_to_async
 
 
 async def call_tika(path, service):
-    headers = {
-        "X-Tika-OCRTimeout": "300"
-    }
     try:
         response = await blocking_to_async(parser.from_file, path, service=service,
                                            requestOptions={'timeout': 300})
         if response["status"] != 200:
-            raise TikaError(f"Tika returned {response['status']}")
+            raise TikaError(f"Tika returned {response['status']} code")
         return response
     except Exception as e:
         raise TikaError(e)

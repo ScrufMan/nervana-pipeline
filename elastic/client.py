@@ -1,28 +1,21 @@
-import json
 import os
 
 from elasticsearch import AsyncElasticsearch, Elasticsearch
 
 
-def get_sync_elastic_client() -> Elasticsearch:
-    # absolute path of current working directory
-    wd_abs = os.getcwd()
-
-    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        config = json.load(config_file)
-    url = f"http://{config['host']}:{config['port']}"
-    return Elasticsearch(url, timeout=200)
-
-
 def get_async_elastic_client() -> AsyncElasticsearch:
-    # absolute path of current working directory
-    wd_abs = os.getcwd()
+    user = os.environ.get("ELASTIC_USER", None)
+    password = os.environ.get("ELASTIC_PASSWORD", None)
 
-    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        config = json.load(config_file)
-    url = f"http://{config['host']}:{config['port']}"
+    if user is None or password is None:
+        raise EnvironmentError("ELASTIC_USER and ELASTIC_PASSWORD must be set in .env file")
 
-    return AsyncElasticsearch(url, timeout=200)
+    return AsyncElasticsearch(
+        "https://localhost:9200",
+        ca_certs="./http_ca.crt",
+        basic_auth=(user, password),
+        timeout=200
+    )
 
 
 async def test_connection_async(es: AsyncElasticsearch):

@@ -9,7 +9,7 @@ from .entity import Entity
 from .helpers import get_context
 from .post_processor.lemmatizer import Lemmatizer
 
-tagger = Tagger.load(r"C:\Users\bukaj\code\school\bakalarka\entity_recognizer\post_processor\czech.tagger")
+tagger = Tagger.load("./czech.tagger")
 
 NAMETAG_TO_UNIVERSAL = {
     "P": "person",
