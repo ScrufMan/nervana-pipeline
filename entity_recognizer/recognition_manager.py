@@ -6,8 +6,8 @@ from httpx import AsyncClient
 from lingua.language import Language
 
 from entity_recognizer.post_processor import find_btc_adresses, find_bank_accounts
+from utils.text import split_string
 from . import Entity
-from .helpers import split_string
 from .nametag import run_nametag
 
 # from .spacy import get_entities

@@ -1,7 +1,7 @@
 import re
 
 
-def generic_filter(raw: str, oneline) -> str:
+def generic_filter(raw: str) -> str:
     raw = raw.strip()
     raw = re.sub(r'\n{2,}', '\n', raw)
     raw = re.sub('\r', '', raw)
@@ -10,6 +10,4 @@ def generic_filter(raw: str, oneline) -> str:
     raw = re.sub(r'\t', ' ', raw)
     raw = re.sub(r'"', '', raw)
     raw = re.sub(r"'", '', raw)
-    if oneline:
-        raw = re.sub(r'\n', '. ', raw)
     return raw

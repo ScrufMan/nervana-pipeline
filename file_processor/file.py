@@ -4,13 +4,17 @@ from typing import Optional
 
 from colorama import Fore, Style
 from httpx import AsyncClient
-from lingua import Language
+from lingua import Language, IsoCode639_1
 
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
 from .filters import filter_plaintext
-from .metadata import get_file_format_magic, parse_mime_type, get_text_languages
-from .tika import call_tika
+from .metadata import get_file_format_magic, parse_mime_type, determine_text_languages
+from .tika import get_tika_data, get_tika_language
+
+# TODO: move to config
+supported_languages = [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
+                       Language.GERMAN, Language.SPANISH, Language.UKRAINIAN]
 
 
 class File:
@@ -33,7 +37,7 @@ class File:
         return self.path_obj.name
 
     async def process(self, client: AsyncClient):
-        metadata, plaintext = await call_tika(self.path)
+        metadata, plaintext = await get_tika_data(self.path)
 
         mime_format = metadata.get("Content-Type")
         if not mime_format:
@@ -51,20 +55,20 @@ class File:
             print(f"{Fore.LIGHTMAGENTA_EX}{self}: has no content{Style.RESET_ALL}")
             return
 
-        langs = get_text_languages(plaintext)
-        language = langs[0].language if langs else None
+        language = determine_text_languages(plaintext)
 
-        if not language:
-            print(f"{Fore.LIGHTMAGENTA_EX}{self}: couldn't determine language{Style.RESET_ALL}")
-            return
+        if not language or language not in supported_languages:
+            # try to use language from tika
+            tika_lang = await get_tika_language(self.path)
+            iso_code = IsoCode639_1[tika_lang.upper()]
+            parsed_lang = Language.from_iso_code_639_1(iso_code)
+            if parsed_lang in supported_languages:
+                language = parsed_lang
+            else:
+                print(f"{Fore.LIGHTMAGENTA_EX}{self}: unsupported language {language}{Style.RESET_ALL}")
+                return
 
-        if language not in [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
-                            Language.GERMAN, Language.SPANISH, Language.UKRAINIAN]:
-            print(f"{Fore.LIGHTMAGENTA_EX}{self}: unsupported language: {language}{Style.RESET_ALL}")
-            return
-
-        # TODO: get if was parsed by tika OCR
-        plaintext = filter_plaintext(file_format, plaintext, False)
+        plaintext = filter_plaintext(file_format, plaintext)
 
         self.format = file_format
         self.plaintext = plaintext

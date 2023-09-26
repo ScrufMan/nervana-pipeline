@@ -1,5 +1,6 @@
 import textwrap
 
+# TODO: move to config
 CONTEXT_LENGTH = 180
 
 

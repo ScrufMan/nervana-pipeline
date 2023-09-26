@@ -1,7 +1,7 @@
 import spacy
 
+from utils.text import get_context
 from .entity import Entity
-from .helpers import get_context
 
 SPACY_TO_UNIVERSAL = {
     "PERSON": "person",

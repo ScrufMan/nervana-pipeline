@@ -5,8 +5,8 @@ from httpx import AsyncClient
 from lingua.language import Language
 from ufal.morphodita import *
 
+from utils.text import get_context
 from .entity import Entity
-from .helpers import get_context
 from .post_processor.lemmatizer import Lemmatizer
 
 tagger = Tagger.load("./czech.tagger")

@@ -7,7 +7,7 @@ WORKDIR /app
 # Then remove the package index cache to reduce image size
 RUN apt-get update && apt-get install -y \
     curl \
-    unzip \
+    unzip unrar p7zip p7zip-full \
     tesseract-ocr \
     tesseract-ocr-all \
     libmagic1 \

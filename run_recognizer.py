@@ -13,14 +13,9 @@ from elasticsearch import AsyncElasticsearch
 from elasticsearch.exceptions import AuthenticationException
 from httpx import AsyncClient
 
-from elastic import (
-    get_async_elastic_client,
-    test_connection_async,
-    assert_index_exists,
-    index_file,
-)
-from exceptions import *
+from elastic import get_async_elastic_client, test_connection_async, assert_index_exists, index_file
 from file_processor import *
+from utils.exceptions import *
 
 sem = asyncio.Semaphore(8)
 
@@ -47,14 +42,11 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, file_pat
             f"{Fore.GREEN}{file_entry}: finished with {len(file_entry.entities)} entities{Style.RESET_ALL}")
 
     except TikaError as e:
-        print(f"{file_entry}: Error from Tika: {e}", file=sys.stderr)
+        print(f"{file_entry}: Error while communicating with Tika - {e}", file=sys.stderr)
     except ConnectionError:
         print(f"{file_entry}: Cannot connect to Elasticsearch", file=sys.stderr)
     except (httpx.ReadTimeout, requests.exceptions.ReadTimeout):
         print(f"{file_entry}: Read Timeout", file=sys.stderr)
-    except Exception as e:
-        print(f"{file_entry}: Unknown error: {e}", file=sys.stderr)
-        raise
 
 
 async def worker(task_queue, es: AsyncElasticsearch, client: AsyncClient, dataset_name: str):
@@ -65,14 +57,16 @@ async def worker(task_queue, es: AsyncElasticsearch, client: AsyncClient, datase
         try:
             await process_one_file(es, client, file_path, dataset_name)
         except Exception as e:
-            print(f"An error occurred while processing {file_path}: {e}", file=sys.stderr)
-        task_queue.task_done()
+            print(f"{file_path}: Fatal error - {e}", file=sys.stderr)
+        finally:
+            task_queue.task_done()
 
 
 async def run_pipeline(paths: list[str], dataset_name: str):
-    print("Initializing NERvana pipeline...")
-    es = get_async_elastic_client()
     try:
+        print("Initializing NERvana pipeline...")
+        es = get_async_elastic_client()
+
         # larger files need more time to be processed
         timeout = httpx.Timeout(300)
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -139,7 +133,6 @@ if __name__ == "__main__":
         print("Please provide a root directory and a dataset name", file=sys.stderr)
         exit(1)
     load_dotenv()
-    tika.TikaClientOnly = True
 
     root_dir, dataset_name = get_cl_arguments()
     print(f"Looking for files in directory: {root_dir}")

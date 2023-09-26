@@ -1,7 +1,7 @@
 import re
 
 from entity_recognizer.entity import Entity
-from entity_recognizer.helpers import get_context
+from utils.text import get_context
 
 
 def find_phone_numbers(data, phones):
