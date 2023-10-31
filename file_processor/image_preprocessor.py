@@ -2,9 +2,11 @@ import math
 
 import cv2
 import numpy as np
+import pytesseract
 
+from config import config
 from config.config import SUPPORTED_LANGUAGES
-from utils import make_sync_fn_async
+from utils import run_sync_fn_async, filter_for_lang_detection
 from .filters import generic_filter
 from .metadata import determine_text_language
 
@@ -16,21 +18,19 @@ def grayscale(image):
 
 # noise removal
 def blur(image):
-    return cv2.GaussianBlur(image, (5, 5), 0)
+    return cv2.GaussianBlur(image, (3, 3), 0)
 
 
 # binarization
 def thresholding(image):
     return cv2.adaptiveThreshold(image, 255,
-	cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 5)
+                                 cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 5)
 
 
 # morphology
 def morpho(image):
-    kernel = np.ones((3, 3), np.uint8)
-    eroded = cv2.erode(image, kernel, iterations=2)
-    dilated = cv2.dilate(eroded, kernel, iterations=1)
-    return cv2.bilateralFilter(dilated, d=9, sigmaColor=75, sigmaSpace=75)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
 
 def deskew_image(
@@ -48,15 +48,17 @@ def deskew_image(
     return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 
-async def find_best_rotation(image, easyocr_reader):
+async def find_best_rotation(preprocessed_image):
     """
-    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by tesseract
-    :param image:
-    :return: rotated image, text returned by tesseract
+    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by easyocr
+    :param preprocessed_image: image after preprocessing
+    :return: rotated image, text returned by tesseract, language of the text, confidence of the language
     """
     best_confidence = -np.inf
-    best_rotation = image
+    best_rotation = preprocessed_image
     best_text = ""
+    lang = None
+    best_lang_confidence = 0
 
     angle_to_cv2 = {
         90: cv2.ROTATE_90_COUNTERCLOCKWISE,
@@ -65,81 +67,58 @@ async def find_best_rotation(image, easyocr_reader):
     }
 
     for angle in [0, 90, 180, 270]:
-        rotated = cv2.rotate(image, angle_to_cv2[angle]) if angle != 0 else image
-        # assuming most of the text is in Czech or English
-        data = await make_sync_fn_async(easyocr_reader.readtext, rotated)
+        rotated = cv2.rotate(preprocessed_image, angle_to_cv2[angle]) if angle != 0 else preprocessed_image
 
         # Extract the detection confidences of current orientation but exclude empty, or non-alphanumeric text
+        data = await run_sync_fn_async(pytesseract.image_to_data, rotated, lang=config.TESSERACT_LANG_STRING,
+                                       output_type=pytesseract.Output.DICT)
+
         confidences = []
         text = ""
-        for _, detected_text, conf in data:
-            if not detected_text.isspace():
+        # Extract the detection confidences of current orientation but exclude empty, or non-alphanumeric text
+        for detected_text, conf in zip(data["text"], data["conf"]):
+            if not detected_text.isspace() and conf != -1:
                 confidences.append(conf)
                 text += detected_text + " "
 
-        detection_confidence = sum(confidences) / len(confidences) if confidences else 0
+        if not confidences:
+            continue
+
+        detection_confidence = sum(confidences) / len(confidences)
         text = generic_filter(text)
         text = text.lower()
 
-        # filter text to only alphanumeric characters with space for language detection
-        filtered_text = ""
-        for char in text:
-            if char.isalnum() or char.isspace():
-                filtered_text += char
+        # filter out non-alphanumeric characters for language detection
+        filtered_text = filter_for_lang_detection(text)
 
         lang, lang_confidence = determine_text_language(filtered_text, ocr=True)
         if not lang or lang not in SUPPORTED_LANGUAGES:
             continue
 
+        # calculate final confidence as the product of detection confidence and language confidence
         detection_confidence *= lang_confidence
 
         if angle == 0:
-            # give a  bit more weight to original image
-            detection_confidence *= 1.5
+            # give a bit more weight to unrotated image
+            detection_confidence *= 1.1
 
         if detection_confidence > best_confidence:
             best_confidence = detection_confidence
             best_rotation = rotated
             best_text = text
+            best_lang_confidence = lang_confidence
+            # sufficient confidence to stop
+            if best_confidence > 95:
+                break
 
-    return best_rotation, best_text
+    return best_rotation, best_text, lang, best_lang_confidence
 
 
-async def preprocess(image_path, easyocr_reader):
-    def extract_text_regions(image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-        kernel = np.ones((3, 3), np.uint8)
-        opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=2)
-        sure_bg = cv2.dilate(opening, kernel, iterations=3)
-        dist_transform = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
-        ret, sure_fg = cv2.threshold(dist_transform, 0.7 * dist_transform.max(), 255, 0)
-        sure_fg = np.uint8(sure_fg)
-        unknown = cv2.subtract(sure_bg, sure_fg)
-        ret, markers = cv2.connectedComponents(sure_fg)
-        markers = markers + 1
-        markers[unknown == 255] = 0
-        markers = cv2.watershed(image, markers)
-        image[markers == -1] = [255, 0, 0]
-        return markers
-
-    # to handle path with non-ascii characters we load image as numpy array
-    image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8),
-                         cv2.IMREAD_UNCHANGED)
-    regions = extract_text_regions(image)
-
-    def crop_regions(image, boxes):
-        cropped_regions = []
-        for box in boxes:
-            startX, startY, endX, endY = box
-            cropped_region = image[startY:endY, startX:endX]
-            cropped_regions.append(cropped_region)
-        return cropped_regions
-
-    cropped_regions = crop_regions(image, boxes)
+async def preprocess_ocr(image_path):
+    # handle paths with non-ascii characters
+    image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     gray = grayscale(image)
     blurred = blur(gray)
     closed = morpho(blurred)
-    binarized = thresholding(closed)
-    rotated, initial_text = await find_best_rotation(binarized, easyocr_reader)
-    return rotated, initial_text
+    rotated, tesseract_text, tesseract_lang, tesseract_prob = await find_best_rotation(closed)
+    return rotated, tesseract_text, tesseract_lang, tesseract_prob
