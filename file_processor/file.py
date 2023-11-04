@@ -9,11 +9,11 @@ from lingua import Language, IsoCode639_1
 from config import config
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
-from utils import setup_logger, filter_for_lang_detection
+from utils import setup_logger, filter_for_lang_detection, run_sync_fn_async_cpu
 from .filters import filter_plaintext
 from .metadata import extension_from_mime, determine_text_language
 from .ocr import run_ocr
-from .tika_client import call_tika, get_tika_language
+from .tika_client import call_tika_async, get_tika_language
 
 logger = setup_logger(__name__)
 
@@ -38,7 +38,7 @@ class File:
         return self.path_obj.name
 
     async def process(self, client: AsyncClient):
-        tika_response = await call_tika(self.path, "meta")
+        tika_response = await call_tika_async(self.path, "meta")
         metadata = tika_response["metadata"]
         if not metadata:
             logger.error(f"{self}: cannot extract metadata using tika")
@@ -56,9 +56,9 @@ class File:
 
         if self.format in config.OCR_SUFFIXES:
             # language is detected by OCR because it's used for model selection
-            plaintext, language = await run_ocr(self.path)
+            plaintext, language = await run_sync_fn_async_cpu(run_ocr, self.path)
         else:
-            tika_response = await call_tika(self.path, "text")
+            tika_response = await call_tika_async(self.path, "text")
             plaintext = tika_response["content"] or ""
             plaintext = filter_plaintext(self.format, plaintext)
             filtered_text = filter_for_lang_detection(plaintext)

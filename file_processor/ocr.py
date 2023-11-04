@@ -11,7 +11,7 @@ from file_processor.filters import generic_filter
 from file_processor.image_preprocessor import preprocess_ocr
 from file_processor.metadata import determine_text_language
 from utils import filter_for_lang_detection, setup_logger, run_sync_fn_async_cpu
-from .tika_client import call_tika
+from .tika_client import call_tika_ocr
 
 logger = setup_logger(__name__)
 
@@ -114,10 +114,10 @@ def call_easyocr_sync(preprocessed_image):
     return easyocr_reader.readtext(preprocessed_image, detail=0)
 
 
-async def run_easyocr(preprocessed_image):
+def run_easyocr(preprocessed_image):
     # load this model into memory and keep it here, since czech is the most common language
     easyocr_reader = easyocr.Reader(config.EASYOCR_LANGS, gpu=config.GPU)
-    data = await run_sync_fn_async_cpu(call_easyocr_sync, preprocessed_image)
+    data = call_easyocr_sync(preprocessed_image)
     text = " ".join(data)
     text = generic_filter(text)
     text = text.lower()
@@ -149,8 +149,8 @@ def determine_better_model(tess_prob: float, easyocr_prob: float) -> str | None:
     return "easyocr" if easyocr_prob > tess_prob else "tesseract"
 
 
-async def tika_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
-    response = await call_tika(file_path, "text")
+def tika_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
+    response = call_tika_ocr(file_path)
     text = response["content"] or ""
     text = generic_filter(text)
     text = text.lower()
@@ -162,7 +162,7 @@ async def tika_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
     return text, lang
 
 
-async def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
+def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
     """
     Perform OCR on the given file and return the text and language.
     """
@@ -170,10 +170,10 @@ async def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
         image = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
         logger.info(f"File({file_path}): Running Tessaract preprocessing")
         # preprocess the image and detect orientation with tesseract ocr
-        image_preprocessed, tesseract_text, tesseract_lang, tesseract_prob = await preprocess_ocr(image)
+        image_preprocessed, tesseract_text, tesseract_lang, tesseract_prob = preprocess_ocr(image)
 
         logger.info(f"File({file_path}): Running EasyOCR")
-        easyocr_text, easyocr_filtered = await run_easyocr(image_preprocessed)
+        easyocr_text, easyocr_filtered = run_easyocr(image_preprocessed)
 
         easyocr_lang, easyocr_prob = determine_text_language(easyocr_filtered)
         if not easyocr_lang or easyocr_lang not in config.SUPPORTED_LANGUAGES:
@@ -184,7 +184,7 @@ async def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
         if not better_model:
             # all models failed to obtained meaningful text
             logger.warning(f"File({file_path}): OCR failed to obtain meaningful text using Tika as fallback")
-            return await tika_ocr(file_path)
+            return tika_ocr(file_path)
 
         text = easyocr_text if better_model == "easyocr" else tesseract_text
         lang = easyocr_lang if better_model == "easyocr" else tesseract_lang

@@ -6,7 +6,7 @@ import pytesseract
 
 from config import config
 from config.config import SUPPORTED_LANGUAGES
-from utils import filter_for_lang_detection, setup_logger, run_sync_fn_async_cpu
+from utils import filter_for_lang_detection, setup_logger
 from .filters import generic_filter
 from .metadata import determine_text_language
 
@@ -44,7 +44,7 @@ def deskew_image(
     return cv2.warpAffine(image, rot_mat, (int(round(height)), int(round(width))), borderValue=background)
 
 
-async def find_best_rotation(preprocessed_image):
+def find_best_rotation(preprocessed_image):
     """
     Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by tessaract
     Tesseract runs faster than easyocr
@@ -67,9 +67,9 @@ async def find_best_rotation(preprocessed_image):
         rotated = cv2.rotate(preprocessed_image, angle_to_cv2[angle]) if angle != 0 else preprocessed_image
 
         # Extract the detection confidences of current orientation but exclude empty, or non-alphanumeric text
-        data = await run_sync_fn_async_cpu(pytesseract.image_to_data, rotated, config=config.TESSERACT_CONFIG,
-                                           lang=config.TESSERACT_LANG_STRING,
-                                           output_type=pytesseract.Output.DICT)
+        data = pytesseract.image_to_data(rotated, config=config.TESSERACT_CONFIG,
+                                         lang=config.TESSERACT_LANG_STRING,
+                                         output_type=pytesseract.Output.DICT)
 
         confidences = []
         text = ""
@@ -113,7 +113,7 @@ async def find_best_rotation(preprocessed_image):
     return best_rotation, best_text, best_lang, best_lang_confidence
 
 
-async def preprocess_ocr(image: np.ndarray):
+def preprocess_ocr(image: np.ndarray):
     """
     Preprocess the image for OCR
     :param image: image opened with opencv
@@ -125,6 +125,6 @@ async def preprocess_ocr(image: np.ndarray):
     opening = morpho(blurred)
 
     # find the most confident orientation
-    rotated, tesseract_text, tesseract_lang, tesseract_prob = await find_best_rotation(opening)
+    rotated, tesseract_text, tesseract_lang, tesseract_prob = find_best_rotation(opening)
 
     return rotated, tesseract_text, tesseract_lang, tesseract_prob
