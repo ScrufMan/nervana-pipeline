@@ -6,8 +6,8 @@ async def exponential_backoff(
         func: callable,
         retry_exceptions: tuple[Type[Exception]],
         max_retries: int = 3,
-        backoff_factor: float = 1.5,
-        delay: float = 2,
+        backoff_factor: float = 2,
+        delay: float = 3,
         *args,
         **kwargs,
 ):

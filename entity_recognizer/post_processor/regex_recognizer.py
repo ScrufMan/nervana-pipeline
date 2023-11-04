@@ -36,3 +36,5 @@ def find_bank_accounts(plaintext):
         entity = Entity("bank_account", match, match, context)
         ibans.append(entity)
     return ibans
+
+# TODO: rodne cisla

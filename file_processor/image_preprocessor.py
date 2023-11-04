@@ -6,9 +6,11 @@ import pytesseract
 
 from config import config
 from config.config import SUPPORTED_LANGUAGES
-from utils import run_sync_fn_async, filter_for_lang_detection
+from utils import filter_for_lang_detection, setup_logger, run_sync_fn_async_cpu
 from .filters import generic_filter
 from .metadata import determine_text_language
+
+logger = setup_logger(__name__)
 
 
 # gray-scaling
@@ -21,15 +23,9 @@ def blur(image):
     return cv2.GaussianBlur(image, (3, 3), 0)
 
 
-# binarization
-def thresholding(image):
-    return cv2.adaptiveThreshold(image, 255,
-                                 cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, 5)
-
-
 # morphology
 def morpho(image):
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
 
@@ -50,15 +46,16 @@ def deskew_image(
 
 async def find_best_rotation(preprocessed_image):
     """
-    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by easyocr
+    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by tessaract
+    Tesseract runs faster than easyocr
     :param preprocessed_image: image after preprocessing
     :return: rotated image, text returned by tesseract, language of the text, confidence of the language
     """
     best_confidence = -np.inf
     best_rotation = preprocessed_image
     best_text = ""
-    lang = None
-    best_lang_confidence = 0
+    best_lang = None
+    best_lang_confidence: float = 0
 
     angle_to_cv2 = {
         90: cv2.ROTATE_90_COUNTERCLOCKWISE,
@@ -70,8 +67,9 @@ async def find_best_rotation(preprocessed_image):
         rotated = cv2.rotate(preprocessed_image, angle_to_cv2[angle]) if angle != 0 else preprocessed_image
 
         # Extract the detection confidences of current orientation but exclude empty, or non-alphanumeric text
-        data = await run_sync_fn_async(pytesseract.image_to_data, rotated, lang=config.TESSERACT_LANG_STRING,
-                                       output_type=pytesseract.Output.DICT)
+        data = await run_sync_fn_async_cpu(pytesseract.image_to_data, rotated, config=config.TESSERACT_CONFIG,
+                                           lang=config.TESSERACT_LANG_STRING,
+                                           output_type=pytesseract.Output.DICT)
 
         confidences = []
         text = ""
@@ -91,7 +89,7 @@ async def find_best_rotation(preprocessed_image):
         # filter out non-alphanumeric characters for language detection
         filtered_text = filter_for_lang_detection(text)
 
-        lang, lang_confidence = determine_text_language(filtered_text, ocr=True)
+        lang, lang_confidence = determine_text_language(filtered_text)
         if not lang or lang not in SUPPORTED_LANGUAGES:
             continue
 
@@ -106,19 +104,27 @@ async def find_best_rotation(preprocessed_image):
             best_confidence = detection_confidence
             best_rotation = rotated
             best_text = text
+            best_lang = lang
             best_lang_confidence = lang_confidence
             # sufficient confidence to stop
-            if best_confidence > 95:
+            if best_confidence > 99:
                 break
 
-    return best_rotation, best_text, lang, best_lang_confidence
+    return best_rotation, best_text, best_lang, best_lang_confidence
 
 
-async def preprocess_ocr(image_path):
+async def preprocess_ocr(image: np.ndarray):
+    """
+    Preprocess the image for OCR
+    :param image: image opened with opencv
+    :return: preprocessed image, tesseract text, language of tesseract text, confidence of the language
+    """
     # handle paths with non-ascii characters
-    image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     gray = grayscale(image)
     blurred = blur(gray)
-    closed = morpho(blurred)
-    rotated, tesseract_text, tesseract_lang, tesseract_prob = await find_best_rotation(closed)
+    opening = morpho(blurred)
+
+    # find the most confident orientation
+    rotated, tesseract_text, tesseract_lang, tesseract_prob = await find_best_rotation(opening)
+
     return rotated, tesseract_text, tesseract_lang, tesseract_prob

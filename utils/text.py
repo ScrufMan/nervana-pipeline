@@ -4,6 +4,15 @@ import textwrap
 CONTEXT_LENGTH = 180
 
 
+def filter_for_lang_detection(text: str):
+    # filter text to only alphanumeric characters with space for better language detection
+    filtered_text = ""
+    for char in text:
+        if char.isalnum() or char.isspace():
+            filtered_text += char
+    return filtered_text
+
+
 def get_context(value, parent):
     start_idx = parent.find(value)
     end_idx = start_idx + len(value) - 1

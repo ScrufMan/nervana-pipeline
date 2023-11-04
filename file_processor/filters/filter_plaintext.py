@@ -8,11 +8,11 @@ def filter_plaintext(file_format, plaintext):
     filtered_text = generic_filter(plaintext)
 
     match file_format:
-        case "pdf":
+        case ".pdf":
             filtered_text = filter_pdf(filtered_text)
-        case "doc":
+        case ".doc":
             filtered_text = filter_doc(filtered_text)
-        case "pptx":
+        case ".pptx":
             filtered_text = filter_pptx(filtered_text)
 
     return filtered_text
