@@ -15,6 +15,7 @@ tagger = Tagger.load(config.MORPHODITA_TAGGER_PATH)
 
 async def tokenize_data(client: AsyncClient, data: str, language: Language):
     # get base url from config
+    # TODO: move to config.py
     with open("./config/nametag.json", "r") as config_file:
         base_url = json.load(config_file)["URL"]
     url = f"{base_url}/recognize"
@@ -44,9 +45,9 @@ def get_entities(tokenized, is_tabular: bool) -> list[Entity]:
 
         # skip duplicates if we're processing tabular data
         if is_tabular:
-            if entity_value in entities_set:
+            if entity_value.lower() in entities_set:
                 continue
-            entities_set.add(entity_value)
+            entities_set.add(entity_value.lower())
 
         nametag_type = tokenized_entity.attrs["type"]
         nervana_type = config.NAMETAG_TO_NERVANA.get(nametag_type)

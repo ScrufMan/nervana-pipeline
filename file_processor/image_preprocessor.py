@@ -46,8 +46,7 @@ def deskew_image(
 
 def find_best_rotation(preprocessed_image):
     """
-    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by tessaract
-    Tesseract runs faster than easyocr
+    Find the best among 4 possible rotations of the image based on the average confidence of the text recognition by Tessaract
     :param preprocessed_image: image after preprocessing
     :return: rotated image, text returned by tesseract, language of the text, confidence of the language
     """
