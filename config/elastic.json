@@ -27,7 +27,7 @@
         "type": "text"
       },
       "path": {
-        "type": "text"
+        "type": "keyword"
       },
       "format": {
         "type": "keyword"

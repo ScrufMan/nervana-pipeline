@@ -21,18 +21,21 @@ RUN mkdir -p /temp/ && \
 RUN unzip -j /temp/taggers.zip czech-morfflex2.0-pdtc1.0-220710/czech-morfflex2.0-pdtc1.0-220710-pos_only.tagger -d /temp/ && \
     mv /temp/czech-morfflex2.0-pdtc1.0-220710-pos_only.tagger /temp/czech.tagger
 
+# Copy the dependencies file to the working directory
+COPY requirements.txt .
+
+# Install pip dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy the current directory contents into the container at /app
 COPY . /app
-
-# Move the tagger to the post_processor directory
-RUN mv /temp/czech.tagger /app/entity_recognizer/post_processor/czech.tagger
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Install spaCy models
 RUN python -m spacy download en_core_web_trf
 RUN python -m spacy download de_dep_news_trf
+
+# Move the tagger to the assets directory
+RUN mv /temp/czech.tagger /app/assets/czech.tagger
 
 # Keep the container running
 CMD ["tail", "-f", "/dev/null"]
