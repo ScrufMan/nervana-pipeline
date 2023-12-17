@@ -7,10 +7,9 @@ from lingua import Language
 from pytesseract import pytesseract
 
 from config import config
-from file_processor.filters import generic_filter
 from file_processor.image_preprocessor import preprocess_ocr
 from file_processor.metadata import determine_text_language
-from utils import filter_for_lang_detection, setup_logger, run_sync_fn_async_cpu
+from utils import filter_for_lang_detection, setup_logger, run_sync_fn_async_cpu, generic_filter
 from .tika_client import call_tika_ocr
 
 logger = setup_logger(__name__)
@@ -108,16 +107,17 @@ async def run_tesseract(preprocessed_image):
     return text, filtered_text
 
 
-def call_easyocr_sync(preprocessed_image):
-    # load this model into memory and keep it here, since czech is the most common language
-    easyocr_reader = easyocr.Reader(config.EASYOCR_LANGS, gpu=config.GPU)
-    return easyocr_reader.readtext(preprocessed_image, detail=0)
-
-
-def run_easyocr(preprocessed_image):
-    # load this model into memory and keep it here, since czech is the most common language
-    easyocr_reader = easyocr.Reader(config.EASYOCR_LANGS, gpu=config.GPU)
-    data = call_easyocr_sync(preprocessed_image)
+def run_easyocr(preprocessed_image, detected_lang: Language | None):
+    if (detected_lang and detected_lang in config.SUPPORTED_LANGUAGES and
+            detected_lang.iso_code_639_1.name.lower() in available_easyocr_languages):
+        easyocr_langs = [detected_lang.iso_code_639_1.name.lower()]
+        # add english because it's often used in combination with other languages
+        if "en" not in easyocr_langs:
+            easyocr_langs.append("en")
+    else:
+        easyocr_langs = config.EASYOCR_DEFAULT_LANGS
+    reader = easyocr.Reader(easyocr_langs, gpu=config.GPU)
+    data = reader.readtext(preprocessed_image, detail=0)
     text = " ".join(data)
     text = generic_filter(text)
     text = text.lower()
@@ -128,23 +128,18 @@ def run_easyocr(preprocessed_image):
 
 def determine_better_model(tess_prob: float, easyocr_prob: float) -> str | None:
     """
-    Determine which model yields better language probability, therefor which model has better results
-    :param langs_tess: list of languages with their probability from tesseract
-    :param langs_easyocr: list of languages with their probability from easyocr
-    :return: "tesseract" or "easyocr" depending on which model has better results
+    Determine which model yields better language probability, therefore which model has better results
     """
 
-    # if model confidence is smaller than 0.75, we don't trust it
-    if max(tess_prob, easyocr_prob) < 0.75:
+    # if model confidence is smaller than 0.6, we don't trust it
+    if max(tess_prob, easyocr_prob) < 0.6:
         return None
 
-    if easyocr_prob == 1:
+    #  try easyocr first, since it has better results
+    if easyocr_prob >= 0.95:
         return "easyocr"
     if tess_prob == 1:
         return "tesseract"
-
-    # easyocr usually has better results, so we give it a bit more weight
-    # easyocr_prob *= 1.05
 
     return "easyocr" if easyocr_prob > tess_prob else "tesseract"
 
@@ -167,13 +162,14 @@ def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
     Perform OCR on the given file and return the text and language.
     """
     try:
+        # handle images with non ascii paths
         image = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
         logger.info(f"File({file_path}): Running Tessaract preprocessing")
         # preprocess the image and detect orientation with tesseract ocr
         image_preprocessed, tesseract_text, tesseract_lang, tesseract_prob = preprocess_ocr(image)
 
         logger.info(f"File({file_path}): Running EasyOCR")
-        easyocr_text, easyocr_filtered = run_easyocr(image_preprocessed)
+        easyocr_text, easyocr_filtered = run_easyocr(image_preprocessed, tesseract_lang)
 
         easyocr_lang, easyocr_prob = determine_text_language(easyocr_filtered)
         if not easyocr_lang or easyocr_lang not in config.SUPPORTED_LANGUAGES:

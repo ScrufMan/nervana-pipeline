@@ -6,8 +6,7 @@ import pytesseract
 
 from config import config
 from config.config import SUPPORTED_LANGUAGES
-from utils import filter_for_lang_detection, setup_logger
-from .filters import generic_filter
+from utils import filter_for_lang_detection, setup_logger, generic_filter
 from .metadata import determine_text_language
 
 logger = setup_logger(__name__)
@@ -65,6 +64,7 @@ def find_best_rotation(preprocessed_image):
     for angle in [0, 90, 180, 270]:
         rotated = cv2.rotate(preprocessed_image, angle_to_cv2[angle]) if angle != 0 else preprocessed_image
 
+        # Run Tesseract on the rotated image
         # Extract the detection confidences of current orientation but exclude empty, or non-alphanumeric text
         data = pytesseract.image_to_data(rotated, config=config.TESSERACT_CONFIG,
                                          lang=config.TESSERACT_LANG_STRING,
@@ -118,12 +118,9 @@ def preprocess_ocr(image: np.ndarray):
     :param image: image opened with opencv
     :return: preprocessed image, tesseract text, language of tesseract text, confidence of the language
     """
-    # handle paths with non-ascii characters
     gray = grayscale(image)
-    blurred = blur(gray)
-    opening = morpho(blurred)
 
     # find the most confident orientation
-    rotated, tesseract_text, tesseract_lang, tesseract_prob = find_best_rotation(opening)
+    rotated, tesseract_text, tesseract_lang, tesseract_prob = find_best_rotation(gray)
 
     return rotated, tesseract_text, tesseract_lang, tesseract_prob

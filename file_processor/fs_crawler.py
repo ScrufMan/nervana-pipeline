@@ -76,7 +76,7 @@ def get_files(root_dir: str) -> list[File]:
                 continue
 
             file = File(file_abs_path, suffix)
-            if suffix in config.OCR_SUFFIXES:
+            if suffix in config.OCR_FROMATS:
                 files_ocr.append(file)
             else:
                 all_files.append(file)

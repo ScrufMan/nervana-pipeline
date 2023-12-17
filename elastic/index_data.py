@@ -13,7 +13,7 @@ async def assert_index_exists(es: AsyncElasticsearch, index_name: str):
 
     wd_abs = os.getcwd()
     with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        index_settings = json.load(config_file)["index"]
+        index_settings = json.load(config_file)
 
     await es.indices.create(index=index_name, body=index_settings)
 

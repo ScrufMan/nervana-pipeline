@@ -8,8 +8,7 @@ init(autoreset=True)
 
 class ColoredFormatter(logging.Formatter):
     COLORS = {
-        'DEBUG': Fore.BLUE,
-        'INFO': Fore.GREEN,
+        'INFO': Fore.BLUE,
         'WARNING': Fore.YELLOW,
         'ERROR': Fore.RED,
         'CRITICAL': Fore.MAGENTA

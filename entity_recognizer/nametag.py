@@ -1,23 +1,26 @@
-import json
+import os
 
 from bs4 import BeautifulSoup
 from httpx import AsyncClient
-from lingua.language import Language
+from lingua import Language
 from ufal.morphodita import *
 
 from config import config
+from utils import setup_logger
 from utils.text import get_context
 from .entity import Entity
 from .post_processor import Lemmatizer, is_eligible_value
 
-tagger = Tagger.load(config.MORPHODITA_TAGGER_PATH)
+czech_tagger = Tagger.load(f"{config.MORPHODITA_TAGGERS_DIR}/czech.tagger")
+slovak_tagger = Tagger.load(f"{config.MORPHODITA_TAGGERS_DIR}/slovak.tagger")
+english_tagger = Tagger.load(f"{config.MORPHODITA_TAGGERS_DIR}/english.tagger")
+logger = setup_logger(__name__)
 
 
 async def tokenize_data(client: AsyncClient, data: str, language: Language):
-    # get base url from config
-    # TODO: move to config.py
-    with open("./config/nametag.json", "r") as config_file:
-        base_url = json.load(config_file)["URL"]
+    base_url = os.environ.get("NAMETAG_URL", None)
+    if base_url is None:
+        raise EnvironmentError("NAMETAG_URL must be set in .env file")
     url = f"{base_url}/recognize"
     model = config.LANGUGAGE_TO_NAMETAG_MODEL[language]
     payload = {'data': data}
@@ -26,7 +29,7 @@ async def tokenize_data(client: AsyncClient, data: str, language: Language):
     return response.json()['result']
 
 
-def get_entities(tokenized, is_tabular: bool) -> list[Entity]:
+def get_entities(tokenized, is_tabular: bool, language: Language) -> list[Entity]:
     entities = []
     entities_set = set()
 
@@ -55,10 +58,20 @@ def get_entities(tokenized, is_tabular: bool) -> list[Entity]:
         if not nervana_type:
             continue
 
-        try:
-            lemmatized_value = Lemmatizer.lemmatize_text(entity_value, tagger)
-        except Exception as e:
-            print(f"Failed to lemmatize {entity_value}, error: {e}")
+        # use morphodita if possible
+        if language in [Language.CZECH, Language.SLOVAK, Language.ENGLISH]:
+            if language == Language.CZECH:
+                tagger = czech_tagger
+            elif language == Language.SLOVAK:
+                tagger = slovak_tagger
+            elif language == Language.ENGLISH:
+                tagger = english_tagger
+            try:
+                lemmatized_value = Lemmatizer.lemmatize_text(entity_value, tagger)
+            except Exception as e:
+                logger.error(f"Failed to lemmatize {entity_value}, error: {e}")
+                lemmatized_value = entity_value
+        else:
             lemmatized_value = entity_value
 
         context = get_context(entity_value, tokenized_entity.parent.text)
@@ -71,6 +84,6 @@ def get_entities(tokenized, is_tabular: bool) -> list[Entity]:
 
 async def run_nametag(client: AsyncClient, plaintext: str, language: Language, is_tabular: bool) -> list[Entity]:
     tokenized = await tokenize_data(client, plaintext, language)
-    found_entities = get_entities(tokenized, is_tabular)
+    found_entities = get_entities(tokenized, is_tabular, language)
 
     return found_entities

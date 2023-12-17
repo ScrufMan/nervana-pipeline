@@ -5,7 +5,6 @@ from lingua import LanguageDetectorBuilder, Language
 
 # magic object
 pymagic = magic.Magic(mime=True)
-
 # language detector
 lang_detector = LanguageDetectorBuilder.from_all_spoken_languages().build()
 
@@ -17,6 +16,8 @@ def extension_from_mime(mime_type: str | None) -> str | None:
     mime_type = mime_type.split(";")[0]
     if mime_type == "application/x-anb":
         return ".anb"
+    elif mime_type == "application/vnd.ms-outlook":
+        return ".msg"
     return mimetypes.guess_extension(mime_type)
 
 

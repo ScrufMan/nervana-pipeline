@@ -1,7 +1,4 @@
-import spacy
-
-from utils.text import get_context
-from .entity import Entity
+# import spacy
 
 SPACY_TO_UNIVERSAL = {
     "PERSON": "person",
@@ -22,15 +19,15 @@ SPACY_TO_UNIVERSAL = {
 
 def get_entities(data):
     entities = []
-    nlp = spacy.load("en_core_web_trf")
-    doc = nlp(data)
-    for ent in doc.ents:
-        value = ent.text
-        universal_type = SPACY_TO_UNIVERSAL.get(ent.label_, "unknown")
-        if universal_type == "unknown":
-            continue
-        context = get_context(value, data)
-        entity = Entity(universal_type, value, ent.lemma_, context)
-        entities.append(entity)
+    # nlp = spacy.load("en_core_web_trf")
+    # doc = nlp(data)
+    # for ent in doc.ents:
+    #     value = ent.text
+    #     universal_type = SPACY_TO_UNIVERSAL.get(ent.label_, "unknown")
+    #     if universal_type == "unknown":
+    #         continue
+    #     context = get_context(value, data)
+    #     entity = Entity(universal_type, value, ent.lemma_, context)
+    #     entities.append(entity)
 
     return entities
