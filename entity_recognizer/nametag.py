@@ -43,7 +43,13 @@ def get_entities(tokenized, is_tabular: bool, language: Language) -> list[Entity
 
         entity_value = tokenized_entity.text
 
-        if not is_eligible_value(entity_value):
+        nametag_type = tokenized_entity.attrs["type"]
+        nervana_type = config.NAMETAG_TO_NERVANA.get(nametag_type)
+
+        if not nervana_type:
+            continue
+
+        if not is_eligible_value(entity_value, nervana_type):
             continue
 
         # skip duplicates if we're processing tabular data
@@ -51,12 +57,6 @@ def get_entities(tokenized, is_tabular: bool, language: Language) -> list[Entity
             if entity_value.lower() in entities_set:
                 continue
             entities_set.add(entity_value.lower())
-
-        nametag_type = tokenized_entity.attrs["type"]
-        nervana_type = config.NAMETAG_TO_NERVANA.get(nametag_type)
-
-        if not nervana_type:
-            continue
 
         # use morphodita if possible
         if language in [Language.CZECH, Language.SLOVAK, Language.ENGLISH]:

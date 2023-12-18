@@ -4,10 +4,10 @@ from elasticsearch import AsyncElasticsearch
 
 
 def get_async_elastic_client() -> AsyncElasticsearch:
-    host = os.environ.get("ELASTICSEARCH_URL", None)
-    user = os.environ.get("ELASTIC_USER", None)
-    password = os.environ.get("ELASTIC_PASSWORD", None)
-    ca_cert = os.environ.get("ELASTICSEARCH_CACERT", None)
+    host = os.environ.get("ELASTICSEARCH_URL")
+    user = os.environ.get("ELASTIC_USER")
+    password = os.environ.get("ELASTIC_PASSWORD")
+    ca_cert = os.environ.get("ELASTICSEARCH_CACERT")
 
     if host is None or user is None or password is None or ca_cert is None:
         raise EnvironmentError(

@@ -7,12 +7,11 @@ from lingua import Language
 
 from config import config
 from entity_recognizer.post_processor import find_btc_adresses, find_bank_accounts
-from utils import setup_logger
+from utils import setup_logger, run_sync_fn_async_cpu
 from utils.text import split_string
 from . import Entity
 from .nametag import run_nametag
-
-# from .spacy import get_entities
+from .spacy import run_spacy
 
 # prevent cyclic import
 if TYPE_CHECKING:
@@ -24,8 +23,9 @@ logger = setup_logger(__name__)
 async def process_batch(client: AsyncClient, plaintext: str, language: Language, is_tabular: bool) -> list[Entity]:
     if language in config.LANGUGAGE_TO_NAMETAG_MODEL:
         batch_entities = await run_nametag(client, plaintext, language, is_tabular)
+    elif language in config.LANGUAGE_TO_SPACY_MODEL:
+        batch_entities = await run_sync_fn_async_cpu(run_spacy, plaintext, language, is_tabular)
     else:
-        # TODO: implement spacy
         raise NotImplementedError(f"Language {language} is not supported")
 
     batch_entities.extend(find_btc_adresses(plaintext))

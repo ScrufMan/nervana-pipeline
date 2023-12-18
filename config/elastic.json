@@ -24,7 +24,13 @@
   "mappings": {
     "properties": {
       "filename": {
-        "type": "text"
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        },
+        "analyzer": "custom_analyzer"
       },
       "path": {
         "type": "keyword"
@@ -40,7 +46,13 @@
         "type": "keyword"
       },
       "author": {
-        "type": "text"
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        },
+        "analyzer": "custom_analyzer"
       },
       "timestamp": {
         "type": "date"

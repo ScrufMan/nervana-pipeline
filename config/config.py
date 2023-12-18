@@ -67,17 +67,45 @@ SUPPORTED_FORMATS = [
 # -- OCR --
 
 OCR_FROMATS = (".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp")  # files that can be processed by OCR
-TESSERACT_LANG_STRING = "eng+ces+slk+pol+deu"
+TESSERACT_LANG_STRING = "eng+ces+slk+pol+deu+spa"
 TESSERACT_CONFIG = r"--oem 3 --psm 6"
-EASYOCR_DEFAULT_LANGS = ["en", "cs", "sk", "pl", "de"]
+EASYOCR_DEFAULT_LANGS = ["en", "cs", "sk", "pl", "de", "es"]
 
 # -- Language detection --
 
 SUPPORTED_LANGUAGES = [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
-                       Language.GERMAN, Language.SPANISH, Language.UKRAINIAN]
+                       Language.GERMAN, Language.SPANISH, Language.UKRAINIAN, Language.POLISH, Language.RUSSIAN,
+                       Language.FRENCH]
 
 # -- Entity recognition --
 CONTEXT_LENGTH = 200  # length of the entity context in characters
+
+LANGUAGE_TO_SPACY_MODEL = {
+    Language.FRENCH: "fr_core_news_sm",
+    Language.POLISH: "pl_core_news_sm",
+    Language.RUSSIAN: "ru_core_news_sm",
+}  # mapping from language to spacy model
+
+SPACY_TO_NERVANA = {
+    "PERSON": "person",
+    "persName": "person",
+    "GPE": "location",
+    "LOC": "location",
+    "placeName": "location",
+    "ORG": "organization",
+    "PRODUCT": "product",
+    "MONEY": "product",
+    "WORK_OF_ART": "product",
+    "EVENT": "product",
+    "LAW": "document",
+    "DATE": "datetime",
+    "TIME": "datetime",
+    "FAC": "location",
+    "geogName": "location",
+    "NORP": "organization",
+    "orgName": "organization",
+}
+
 LANGUGAGE_TO_NAMETAG_MODEL = {
     Language.ENGLISH: "english-conll-200831",
     Language.CZECH: "czech-cnec2.0-200831",

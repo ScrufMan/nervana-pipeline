@@ -19,6 +19,11 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# install spacy language models
+RUN python -m spacy download fr_core_news_sm
+RUN python -m spacy download pl_core_news_sm
+RUN python -m spacy download ru_core_news_sm
+
 # Copy the current directory contents into the container at /app
 COPY . /app
 

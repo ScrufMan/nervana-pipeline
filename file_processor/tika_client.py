@@ -9,7 +9,7 @@ tika.TikaClientOnly = True
 
 
 async def call_tika_async(file_path: str, service: str):
-    request_options = {'timeout': 120}
+    request_options = {'timeout': 180}
 
     async def analyze_file():
         return await run_sync_fn_async_io(parser.from_file, file_path, service=service,
