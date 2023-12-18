@@ -14,7 +14,12 @@ from httpx import AsyncClient
 from neo4j import AsyncGraphDatabase, AsyncDriver
 
 from config import config
-from elastic import get_async_elastic_client, test_connection_async, assert_index_exists, index_file
+from elastic import (
+    get_async_elastic_client,
+    test_connection_async,
+    assert_index_exists,
+    index_file,
+)
 from file_processor import *
 from utils import setup_logger
 from utils.exceptions import *
@@ -24,8 +29,13 @@ total_entities = 0
 logger = setup_logger(__name__)
 
 
-async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, neo4j_driver: AsyncDriver, file: File,
-                           dataset_name: str):
+async def process_one_file(
+        es: AsyncElasticsearch,
+        client: AsyncClient,
+        neo4j_driver: AsyncDriver,
+        file: File,
+        dataset_name: str,
+):
     global total_entities
     try:
         logger.info(f"Processing {file}")
@@ -49,7 +59,13 @@ async def process_one_file(es: AsyncElasticsearch, client: AsyncClient, neo4j_dr
         logger.error(f"{file}: Read Timeout")
 
 
-async def worker(task_queue, es: AsyncElasticsearch, client: AsyncClient, neo4j_driver: AsyncDriver, dataset_name: str):
+async def worker(
+        task_queue,
+        es: AsyncElasticsearch,
+        client: AsyncClient,
+        neo4j_driver: AsyncDriver,
+        dataset_name: str,
+):
     while True:
         try:
             file: File = await task_queue.get()
@@ -90,8 +106,12 @@ async def run_pipeline(files: list[File], dataset_name: str):
 
             n_workers = config.NUM_WORKERS  # Number of worker coroutines
             # Create workers
-            tasks = [asyncio.create_task(worker(task_queue, es, client, neo4j_driver, dataset_name)) for _ in
-                     range(n_workers)]
+            tasks = [
+                asyncio.create_task(
+                    worker(task_queue, es, client, neo4j_driver, dataset_name)
+                )
+                for _ in range(n_workers)
+            ]
 
             # Wait for all tasks in the queue to be processed
             await task_queue.join()
@@ -135,7 +155,7 @@ async def initialize_nametag(client: AsyncClient):
     if base_url is None:
         raise EnvironmentError("NAMETAG_URL must be set in .env file")
     url = f"{base_url}/recognize"
-    payload = {'data': "initialize"}
+    payload = {"data": "initialize"}
     response = await client.post(url, data=payload)
     response.raise_for_status()
 
@@ -145,7 +165,9 @@ async def initialize_neo4j() -> AsyncDriver:
     neo4j_user = os.environ.get("NEO4J_USER")
     neo4j_password = os.environ.get("NEO4J_PASSWORD")
     if neo4j_url is None or neo4j_user is None or neo4j_password is None:
-        raise EnvironmentError("NEO4J_URL, NEO4J_USER and NEO4J_PASSWORD must be set in .env file")
+        raise EnvironmentError(
+            "NEO4J_URL, NEO4J_USER and NEO4J_PASSWORD must be set in .env file"
+        )
     driver = AsyncGraphDatabase.driver(neo4j_url, auth=(neo4j_user, neo4j_password))
     return driver
 
@@ -166,7 +188,7 @@ if __name__ == "__main__":
     load_dotenv()
 
     data_dir, dataset_name = get_cl_arguments()
-    root_dir = os.path.join("./data", data_dir)
+    root_dir = os.path.join("/nervana_data", data_dir)
     logger.info(f"Looking for files in directory: {root_dir}")
     start_time = time.time()
     try:
@@ -181,4 +203,5 @@ if __name__ == "__main__":
 
     duration = time.time() - start_time
     logger.info(
-        f"NERvana finished in {duration:.2f} seconds! Number of entities indexed: {total_entities}")
+        f"NERvana finished in {duration:.2f} seconds! Number of entities indexed: {total_entities}"
+    )
