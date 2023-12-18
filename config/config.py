@@ -4,69 +4,81 @@ from lingua import Language
 
 NUM_WORKERS = 4  # Number of worker coroutines
 BATCH_WORKERS = 2  # Number of worker coroutines for batch NER processing
-GPU = True  # Use GPU for available tasks
+GPU = False  # Use GPU for available tasks
 
 # -- File processing --
 
-TABULAR_FORMATS = [".csv", ".xls", ".xlsx", ".json"]  # tabular formats where duplicate entities should be removed
+TABULAR_FORMATS = [
+    ".csv",
+    ".xls",
+    ".xlsx",
+    ".json",
+]  # tabular formats where duplicate entities should be removed
 EMAIL_FORMATS = [".msg", ".eml"]  # formats that can contain emails
 SUPPORTED_FORMATS = [
-    '.pdf',
-    '.doc',
-    '.docx',
-    '.xls',
-    '.xlsx',
-    '.ppt',
-    '.pptx',
-    '.html',
-    '.html',
-    '.txt',
-    '.csv',
-    '.rtf',
-    '.jpeg',
-    '.anb',
-    '.jpg',
-    '.png',
-    '.gif',
-    '.bmp',
-    '.tiff',
-    '.psd',
-    '.svg',
-    '.msg',
-    '.eml',
-    '.mbox',
-    '.pst',
-    '.ics',
-    '.odt',
-    '.ods',
-    '.odp',
-    '.xz',
-    '.swf',
-    '.xml',
-    '.json',
-    '.bin',
-    '.avi',
-    '.mp4',
-    '.mpeg',
-    '.mkv',
-    '.flv',
-    '.webm',
-    '.wmv',
-    '.mov',
-    '.asf',
-    '.mp3',
-    '.wav',
-    '.ogg',
-    '.flac',
-    '.ra',
-    '.mid',
-    '.aif',
-    '.m3u',
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
+    ".html",
+    ".html",
+    ".txt",
+    ".csv",
+    ".rtf",
+    ".jpeg",
+    ".anb",
+    ".jpg",
+    ".png",
+    ".gif",
+    ".bmp",
+    ".tiff",
+    ".psd",
+    ".svg",
+    ".msg",
+    ".eml",
+    ".mbox",
+    ".pst",
+    ".ics",
+    ".odt",
+    ".ods",
+    ".odp",
+    ".xz",
+    ".swf",
+    ".xml",
+    ".json",
+    ".bin",
+    ".avi",
+    ".mp4",
+    ".mpeg",
+    ".mkv",
+    ".flv",
+    ".webm",
+    ".wmv",
+    ".mov",
+    ".asf",
+    ".mp3",
+    ".wav",
+    ".ogg",
+    ".flac",
+    ".ra",
+    ".mid",
+    ".aif",
+    ".m3u",
 ]
 
 # -- OCR --
 
-OCR_FROMATS = (".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp")  # files that can be processed by OCR
+OCR_FROMATS = (
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".tiff",
+    ".tif",
+    ".bmp",
+)  # files that can be processed by OCR
 TESSERACT_LANG_STRING = "eng+ces+slk+pol+deu+spa"
 TESSERACT_CONFIG = r"--oem 3 --psm 6"
 EASYOCR_DEFAULT_LANGS = ["en", "cs", "sk", "pl", "de", "es"]
@@ -74,10 +86,23 @@ EASYOCR_MODELS_DIR = "./assets/easyocr_models"  # path to easyocr models directo
 
 # -- Language detection --
 
-SUPPORTED_LANGUAGES = [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
-                       Language.GERMAN, Language.SPANISH, Language.UKRAINIAN, Language.POLISH, Language.RUSSIAN,
-                       Language.FRENCH, Language.ITALIAN, Language.DANISH, Language.PORTUGUESE, Language.SWEDISH,
-                       Language.ROMANIAN]  # supported languages for NER
+SUPPORTED_LANGUAGES = [
+    Language.CZECH,
+    Language.SLOVAK,
+    Language.ENGLISH,
+    Language.DUTCH,
+    Language.GERMAN,
+    Language.SPANISH,
+    Language.UKRAINIAN,
+    Language.POLISH,
+    Language.RUSSIAN,
+    Language.FRENCH,
+    Language.ITALIAN,
+    Language.DANISH,
+    Language.PORTUGUESE,
+    Language.SWEDISH,
+    Language.ROMANIAN,
+]  # supported languages for NER
 
 # -- Entity recognition --
 CONTEXT_LENGTH = 200  # length of the entity context in characters
