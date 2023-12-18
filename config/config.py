@@ -70,12 +70,14 @@ OCR_FROMATS = (".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp")  # files that c
 TESSERACT_LANG_STRING = "eng+ces+slk+pol+deu+spa"
 TESSERACT_CONFIG = r"--oem 3 --psm 6"
 EASYOCR_DEFAULT_LANGS = ["en", "cs", "sk", "pl", "de", "es"]
+EASYOCR_MODELS_DIR = "./assets/easyocr_models"  # path to easyocr models directory
 
 # -- Language detection --
 
 SUPPORTED_LANGUAGES = [Language.CZECH, Language.SLOVAK, Language.ENGLISH, Language.DUTCH,
                        Language.GERMAN, Language.SPANISH, Language.UKRAINIAN, Language.POLISH, Language.RUSSIAN,
-                       Language.FRENCH]
+                       Language.FRENCH, Language.ITALIAN, Language.DANISH, Language.PORTUGUESE, Language.SWEDISH,
+                       Language.ROMANIAN]  # supported languages for NER
 
 # -- Entity recognition --
 CONTEXT_LENGTH = 200  # length of the entity context in characters
@@ -84,6 +86,11 @@ LANGUAGE_TO_SPACY_MODEL = {
     Language.FRENCH: "fr_core_news_sm",
     Language.POLISH: "pl_core_news_sm",
     Language.RUSSIAN: "ru_core_news_sm",
+    Language.ITALIAN: "it_core_news_sm",
+    Language.DANISH: "da_core_news_sm",
+    Language.PORTUGUESE: "pt_core_news_sm",
+    Language.SWEDISH: "sv_core_news_sm",
+    Language.ROMANIAN: "ro_core_news_sm",
 }  # mapping from language to spacy model
 
 SPACY_TO_NERVANA = {

@@ -116,7 +116,8 @@ def run_easyocr(preprocessed_image, detected_lang: Language | None):
             easyocr_langs.append("en")
     else:
         easyocr_langs = config.EASYOCR_DEFAULT_LANGS
-    reader = easyocr.Reader(easyocr_langs, gpu=config.GPU)
+    reader = easyocr.Reader(easyocr_langs, gpu=config.GPU, model_storage_directory=config.EASYOCR_MODELS_DIR,
+                            download_enabled=False)
     data = reader.readtext(preprocessed_image, detail=0)
     text = " ".join(data)
     text = generic_filter(text)
@@ -169,7 +170,13 @@ def run_ocr(file_path: str) -> tuple[Optional[str], Optional[Language]]:
         image_preprocessed, tesseract_text, tesseract_lang, tesseract_prob = preprocess_ocr(image)
 
         logger.info(f"File({file_path}): Running EasyOCR")
-        easyocr_text, easyocr_filtered = run_easyocr(image_preprocessed, tesseract_lang)
+
+        try:
+            easyocr_text, easyocr_filtered = run_easyocr(image_preprocessed, tesseract_lang)
+        except Exception as e:
+            logger.error(f"File({file_path}): EasyOCR failed with exception: {e}")
+            easyocr_text = ""
+            easyocr_filtered = ""
 
         easyocr_lang, easyocr_prob = determine_text_language(easyocr_filtered)
         if not easyocr_lang or easyocr_lang not in config.SUPPORTED_LANGUAGES:
