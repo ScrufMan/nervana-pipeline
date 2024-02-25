@@ -1,39 +1,28 @@
-import json
 import os
 
-from elasticsearch import AsyncElasticsearch, Elasticsearch
-
-
-def get_sync_elastic_client() -> Elasticsearch:
-    # absolute path of current working directory
-    wd_abs = os.getcwd()
-
-    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        config = json.load(config_file)
-    url = f"http://{config['host']}:{config['port']}"
-    return Elasticsearch(url, timeout=200)
+from elasticsearch import AsyncElasticsearch
 
 
 def get_async_elastic_client() -> AsyncElasticsearch:
-    # absolute path of current working directory
-    wd_abs = os.getcwd()
+    host = os.environ.get("ELASTICSEARCH_URL")
+    user = os.environ.get("ELASTIC_USER")
+    password = os.environ.get("ELASTIC_PASSWORD")
+    ca_cert = os.environ.get("ELASTICSEARCH_CACERT")
 
-    with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        config = json.load(config_file)
-    url = f"http://{config['host']}:{config['port']}"
+    if host is None or user is None or password is None or ca_cert is None:
+        raise EnvironmentError(
+            "ELASTICSEARCH_URL, ELASTIC_USER, ELASTIC_PASSWORD and ELASTICSEARCH_CACERT must be set in .env file")
 
-    return AsyncElasticsearch(url, timeout=200)
+    return AsyncElasticsearch(
+        host,
+        ca_certs=ca_cert,
+        basic_auth=(user, password),
+        timeout=200
+    )
 
 
 async def test_connection_async(es: AsyncElasticsearch):
     # Check if connection can be established
     can_connect = await es.ping()
-    if not can_connect:
-        raise ConnectionError()
-
-
-def test_connection_sync(es: Elasticsearch):
-    # Check if connection can be established
-    can_connect = es.ping()
     if not can_connect:
         raise ConnectionError()

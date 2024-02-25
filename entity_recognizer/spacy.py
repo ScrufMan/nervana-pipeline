@@ -1,36 +1,34 @@
 import spacy
+from lingua import Language
 
-from .entity import Entity
-from .helpers import get_context
-
-SPACY_TO_UNIVERSAL = {
-    "PERSON": "person",
-    "GPE": "location",
-    "LOC": "location",
-    "ORG": "organization",
-    "PRODUCT": "product",
-    "MONEY": "product",
-    "WORK_OF_ART": "product",
-    "EVENT": "product",
-    "LAW": "document",
-    "DATE": "datetime",
-    "TIME": "datetime",
-    "FAC": "location",
-    "NORP": "organization",
-}
+from config import config
+from entity_recognizer import Entity
+from entity_recognizer.post_processor import is_eligible_value
+from utils import get_context
 
 
-def get_entities(data):
+def run_spacy(plaintext: str, language: Language, is_tabular: bool) -> list[Entity]:
     entities = []
-    nlp = spacy.load("en_core_web_sm")
-    doc = nlp(data)
+    entities_set = set()
+    model = config.LANGUAGE_TO_SPACY_MODEL[language]
+
+    nlp = spacy.load(model)
+    doc = nlp(plaintext)
+
     for ent in doc.ents:
-        value = ent.text
-        universal_type = SPACY_TO_UNIVERSAL.get(ent.label_, "unknown")
-        if universal_type == "unknown":
+        entity_value = ent.text
+        nervana_type = config.SPACY_TO_NERVANA.get(ent.label_)
+
+        if not is_eligible_value(entity_value, nervana_type):
             continue
-        context = get_context(value, data)
-        entity = Entity(universal_type, value, ent.lemma_, context)
+        # skip duplicates if we're processing tabular data
+        if is_tabular:
+            if entity_value.lower() in entities_set:
+                continue
+            entities_set.add(entity_value.lower())
+
+        context = get_context(entity_value, plaintext)
+        entity = Entity(nervana_type, entity_value, ent.lemma_, context)
         entities.append(entity)
 
     return entities

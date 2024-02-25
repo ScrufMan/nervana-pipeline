@@ -2,22 +2,26 @@ from datetime import datetime
 from pathlib import PurePath
 from typing import Optional
 
-from colorama import Fore, Style
 from httpx import AsyncClient
-from lingua import Language
+from lingua import Language, IsoCode639_1
+from neo4j import AsyncDriver
 
+from config import config
 from entity_recognizer import Entity
 from entity_recognizer.recognition_manager import find_entities_in_file
-from .filters import filter_plaintext
-from .metadata import get_file_format_magic, parse_mime_type, get_text_languages
+from utils import setup_logger, filter_for_lang_detection, run_sync_fn_async_cpu, generic_filter
+from .emails import process_email
+from .metadata import extension_from_mime, determine_text_language
 from .ocr import run_ocr
-from .tika import get_tika_metadata, get_tika_content
+from .tika_client import call_tika_async
+
+logger = setup_logger(__name__)
 
 
 class File:
-    def __init__(self, path: str):
+    def __init__(self, path: str, file_format: Optional[str] = None):
         self.path_obj = PurePath(path)
-        self.format = "unknown"
+        self.format = file_format
         self.plaintext = ""
         self.language: Optional[Language] = None
         self.author = "unknown"
@@ -33,57 +37,69 @@ class File:
     def filename(self):
         return self.path_obj.name
 
-    async def process(self, client: AsyncClient):
-        metadata = await get_tika_metadata(self.path)
-
-        mime_format = metadata.get("Content-Type", "")
-        if not mime_format:
-            # try to get file format from magic
-            mime_format = get_file_format_magic(self.path)
-
-        file_format = parse_mime_type(mime_format)
-        if not file_format:
-            print(f"{Fore.LIGHTMAGENTA_EX}{self}: unknown mime type: {mime_format}{Style.RESET_ALL}")
-            return
-        if file_format in ["zip"]:
+    async def process(self, client: AsyncClient, neo4j_driver: AsyncDriver):
+        tika_response = await call_tika_async(self.path, "meta")
+        metadata = tika_response["metadata"]
+        if not metadata:
+            logger.error(f"{self}: cannot extract metadata using tika")
             return
 
-        # file is handled by ocr
-        ocr_type = file_format in ["png", "jpg", "jpeg", "tiff"]
-        if ocr_type:
-            plaintext, language = await run_ocr(self.path)
+        # use tika mime even if detected before by magic
+        # use magic as fallback if available
+        tika_mime = metadata.get("Content-Type")
+        tika_extension = extension_from_mime(tika_mime)
+        if tika_extension in config.SUPPORTED_FORMATS:
+            self.format = tika_extension
+        elif self.format is None:
+            logger.error(f"{self}: cannot determine file format")
+            return
+
+        # handle emails
+        if self.format in config.EMAIL_FORMATS:
+            await process_email(neo4j_driver, self.path, metadata)
+
+        if self.format in config.OCR_FROMATS:
+            # language is detected by OCR because it's used for model selection
+            plaintext, language = await run_sync_fn_async_cpu(run_ocr, self.path)
         else:
-            plaintext = await get_tika_content(self.path)
-            langs = get_text_languages(plaintext)
-            language = langs[0].language if langs else None
+            tika_response = await call_tika_async(self.path, "text")
+            plaintext = tika_response["content"] or ""
+            plaintext = generic_filter(plaintext)
+            filtered_text = filter_for_lang_detection(plaintext)
+            language, _ = determine_text_language(filtered_text)
 
         if not plaintext:
-            print(f"{Fore.LIGHTMAGENTA_EX}{self}: has no content{Style.RESET_ALL}")
+            logger.error(f"{self}: cannot extract plaintext")
             return
 
-        if not language:
-            print(f"{Fore.LIGHTMAGENTA_EX}{self}: couldn't determine language{Style.RESET_ALL}")
-            return
+        if not language or language not in config.SUPPORTED_LANGUAGES:
+            # try to use language from tika
+            tika_lang = metadata.get("language")
+            if not tika_lang:
+                logger.error(f"{self}: cannot determine language")
+                return
+            iso_code = IsoCode639_1[tika_lang.upper()]
+            parsed_lang = Language.from_iso_code_639_1(iso_code)
+            if parsed_lang in config.SUPPORTED_LANGUAGES:
+                language = parsed_lang
+            else:
+                logger.error(f"{self}: unsupported language {language}")
+                return
 
-        plaintext = filter_plaintext(file_format, plaintext, ocr_type)
-
-        self.format = file_format
         self.plaintext = plaintext
         self.language = language
-        self.timestamp = metadata.get("dcterms:created", datetime.now())
+        self.timestamp = metadata.get("dcterms:created")
         self.author = metadata.get("dc:creator", "unknown")
 
-        # file should be marked as valid because if something goes wrong during entity recognition
+        # file is marked as valid because if something goes wrong during entity recognition
         # at least the metadata and plaintext will be saved
         self.valid = True
 
         try:
-            entities = await find_entities_in_file(client, self)
+            self.entities = await find_entities_in_file(client, self)
         except Exception as e:
-            print(f"{Fore.RED}{self}: Error while recognizing entities {e}{Style.RESET_ALL}")
+            logger.error(f"{self}: Error while recognizing entities {e}")
             return
-
-        self.entities = entities
 
     def make_document(self):
         return {

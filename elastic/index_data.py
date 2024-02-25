@@ -4,6 +4,8 @@ import os
 from elasticsearch import AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 
+from file_processor import File
+
 
 async def assert_index_exists(es: AsyncElasticsearch, index_name: str):
     if await es.indices.exists(index=index_name):
@@ -11,13 +13,12 @@ async def assert_index_exists(es: AsyncElasticsearch, index_name: str):
 
     wd_abs = os.getcwd()
     with open(os.path.join(wd_abs, "config/elastic.json")) as config_file:
-        index_settings = json.load(config_file)["index"]
+        index_settings = json.load(config_file)
 
     await es.indices.create(index=index_name, body=index_settings)
 
 
-# TODO: add file class as type
-async def index_file(es: AsyncElasticsearch, dataset: str, file):
+async def index_file(es: AsyncElasticsearch, dataset: str, file: File):
     file_document = file.make_document()
     res = await es.index(index=dataset, document=file_document)
     file_id = res['_id']
