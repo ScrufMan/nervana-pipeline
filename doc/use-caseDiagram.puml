@@ -1,0 +1,24 @@
+@startuml
+!theme cerulean
+left to right direction
+skinparam DefaultFontSize 20
+
+package NERvana {
+    (Process Files)
+    (Search in Datasets)
+    (See Statistics)
+    (Display File Content)
+    (Download File)
+    (Generate Exports)
+}
+
+:User: 
+
+User --> (Process Files)
+User --> (Search in Datasets)
+User --> (See Statistics)
+User --> (Display File Content)
+User --> (Download File)
+User --> (Generate Exports)
+
+@enduml

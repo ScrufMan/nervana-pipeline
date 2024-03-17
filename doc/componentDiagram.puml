@@ -1,0 +1,46 @@
+@startuml
+!theme cerulean
+skinparam DefaultFontSize 24
+
+package "Front End" {
+    component [Graphical User Interface] as GUI
+}
+
+package "Back End" {
+    component [Search]
+    component [Statistics]
+    component [Search Provider]
+}
+ 
+package "Pipeline" {
+    [Manager]
+    [File Processor]
+    [Entity Recognizer]
+    [Indexer]
+}
+
+interface "Search API" as Search_API
+interface "Statistics API" as Stats_API
+interface "File API" as File_API
+interface "GUI" as GUI_API
+
+database "Search Engine" {
+    [Stored Data]
+}
+
+[Search] -up- Search_API
+[Statistics] -up- Stats_API
+GUI -down-( Search_API
+GUI -down-( Stats_API
+[Search Provider] .down.> [Stored Data] : Queries
+[Stored Data] .up.> [Search Provider] : Results
+[Search] ..> [Search Provider]
+[Statistics] ..> [Search Provider]
+[Indexer] .up.> [Stored Data] : Indexes Data
+[Manager] -- [File Processor] : Processes Documents
+[Manager] -- [Entity Recognizer] : NER
+[Manager] -- [Indexer]
+[Manager] -up- File_API
+[GUI] -left- "GUI_API"
+
+@enduml
